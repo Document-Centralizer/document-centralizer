@@ -2,11 +2,23 @@ import api from './api';
 import { setToken, setUserData, removeToken, removeUserData } from '../utils/localStorage';
 
 export const loginUser = async (credentials) => {
-  // Dummy authentication
+  // Hardcoded credentials for testing (remove when real auth is ready)
+  let role = 'user';
+  let name = 'Test User';
+
+  if (credentials.email === 'superadmin@test.com' && credentials.password === 'superadmin123') {
+    role = 'superadmin';
+    name = 'Super Admin';
+  } else if (credentials.email === 'admin@test.com' && credentials.password === 'admin123') {
+    role = 'admin';
+    name = 'Admin User';
+  }
+
   const dummyUser = {
     id: 1,
-    name: 'Test User',
-    role: credentials.role || 'user',
+    name,
+    email: credentials.email,
+    role,
     token: 'dummy-jwt-token-123'
   };
   
