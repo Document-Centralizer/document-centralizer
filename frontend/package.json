@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
-  "name": "frontend",
-=======
   "name": "document-centralizer-frontend",
->>>>>>> 9e453f3 (feat(user): implement user module with dashboard and document management)
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -14,13 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "axios": "^1.18.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-icons": "^5.7.0",
-    "react-router-dom": "^7.18.1"
-=======
     "@reduxjs/toolkit": "^2.12.0",
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.18.1",
@@ -35,7 +24,6 @@
     "react-router-dom": "^7.18.1",
     "react-select": "^5.10.2",
     "recharts": "^3.8.1"
->>>>>>> 9e453f3 (feat(user): implement user module with dashboard and document management)
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -43,18 +31,12 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
-<<<<<<< HEAD
-=======
     "autoprefixer": "^10.5.0",
->>>>>>> 9e453f3 (feat(user): implement user module with dashboard and document management)
     "eslint": "^10.6.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
-<<<<<<< HEAD
-=======
     "postcss": "^8.5.15",
->>>>>>> 9e453f3 (feat(user): implement user module with dashboard and document management)
     "tailwindcss": "^4.3.3",
     "vite": "^8.1.1"
   }

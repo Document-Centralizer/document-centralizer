@@ -1,22 +1,3 @@
-<<<<<<< HEAD
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-import Login from "../pages/Login";
-import Register from "../pages/Register";
-
-export default function AppRoutes() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-=======
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import Login from '../pages/Login';
@@ -25,7 +6,6 @@ import Unauthorized from '../pages/Unauthorized';
 
 import UserLayout from '../layouts/UserLayout';
 import AdminLayout from '../layouts/AdminLayout';
-import SuperAdminLayout from '../layouts/SuperAdminLayout';
 
 import UserDashboard from '../pages/user/Dashboard';
 import Upload from '../pages/user/Upload';
@@ -38,7 +18,17 @@ import Profile from '../pages/user/Profile';
 import Settings from '../pages/user/Settings';
 
 import AdminDashboard from '../pages/admin/AdminDashboard';
-import SuperAdminDashboard from '../pages/superadmin/SuperAdminDashboard';
+
+// Import newly generated SuperAdmin module components
+import {
+  SuperAdminLayout,
+  Dashboard as SuperAdminDashboard,
+  VerificationQueue,
+  DocumentReview,
+  ApprovalHistory,
+  Reports,
+  Profile as SuperAdminProfile
+} from '../pages/superadmin';
 
 const AppRoutes = () => {
   return (
@@ -67,7 +57,6 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoute allowedRoles={['admin', 'superadmin']} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="*" element={<AdminDashboard />} />
           </Route>
         </Route>
 
@@ -75,16 +64,20 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
           <Route path="/superadmin" element={<SuperAdminLayout />}>
             <Route index element={<SuperAdminDashboard />} />
-            <Route path="*" element={<SuperAdminDashboard />} />
+            <Route path="dashboard" element={<SuperAdminDashboard />} />
+            <Route path="verification-queue" element={<VerificationQueue />} />
+            <Route path="document-review" element={<DocumentReview />} />
+            <Route path="review/:id" element={<DocumentReview />} />
+            <Route path="approval-history" element={<ApprovalHistory />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="profile" element={<SuperAdminProfile />} />
           </Route>
         </Route>
 
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
   );
 };
 
 export default AppRoutes;
->>>>>>> 9e453f3 (feat(user): implement user module with dashboard and document management)

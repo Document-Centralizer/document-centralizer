@@ -33,7 +33,7 @@ export default function AdminDashboard() {
                     </Card>
                 ))}
             </div>
-
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="shadow-md border-gray-100 rounded-2xl bg-white">
                     <CardHeader title="Recent Activity" subtitle="Latest platform actions" />
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
                         ))}
                     </CardContent>
                 </Card>
-
+                
                 <Card className="shadow-md border-gray-100 rounded-2xl bg-white">
                     <CardHeader title="System Status" subtitle="Platform health and metrics" />
                     <CardContent className="p-6 space-y-6">
@@ -104,7 +104,7 @@ export default function AdminDashboard() {
                     + Add New User
                 </button>
             </div>
-
+            
             <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-left text-sm whitespace-nowrap">
                     <thead className="bg-slate-50 text-gray-600 font-semibold">
@@ -127,8 +127,9 @@ export default function AdminDashboard() {
                                 <td className="px-6 py-4 text-gray-500">{user.email}</td>
                                 <td className="px-6 py-4 text-gray-500 text-xs font-bold">{user.role}</td>
                                 <td className="px-6 py-4">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${user.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                        }`}>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                        user.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                                    }`}>
                                         {user.status}
                                     </span>
                                 </td>
@@ -171,7 +172,7 @@ export default function AdminDashboard() {
         <div className="animate-in fade-in duration-300">
             <h2 className="text-xl font-bold text-gray-800 mb-2">Pending Document Reviews</h2>
             <p className="text-sm text-gray-500 mb-6">Documents requiring administrative approval.</p>
-
+            
             <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center justify-between p-5 border border-gray-200 rounded-2xl hover:border-blue-300 transition-colors bg-white shadow-sm">
@@ -199,7 +200,7 @@ export default function AdminDashboard() {
                 <h2 className="text-xl font-bold text-gray-800">Document Categories</h2>
                 <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition shadow-sm">+ Add Category</button>
             </div>
-
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 {["Finance", "Legal", "Human Resources", "Engineering", "Marketing", "Personal", "Medical"].map(cat => (
                     <div key={cat} className="p-5 border border-gray-200 rounded-2xl hover:shadow-md transition bg-white flex flex-col items-center justify-center text-center gap-3">
@@ -216,9 +217,9 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-bold text-gray-800 mb-6">Subscription Plans</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                    { name: "Basic", price: "Free", users: "1,024 Active", color: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200" },
-                    { name: "Pro", price: "$9.99/mo", users: "432 Active", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
-                    { name: "Enterprise", price: "$49.99/mo", users: "89 Active", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" }
+                    {name: "Basic", price: "Free", users: "1,024 Active", color: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200"},
+                    {name: "Pro", price: "$9.99/mo", users: "432 Active", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200"},
+                    {name: "Enterprise", price: "$49.99/mo", users: "89 Active", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200"}
                 ].map(plan => (
                     <div key={plan.name} className={`p-8 rounded-3xl border ${plan.border} bg-white shadow-sm hover:shadow-xl transition-shadow relative overflow-hidden flex flex-col items-center text-center`}>
                         <div className={`absolute top-0 w-full h-2 ${plan.bg}`}></div>
@@ -275,10 +276,11 @@ export default function AdminDashboard() {
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all w-full text-left ${activeTab === tab
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all w-full text-left ${
+                                activeTab === tab
                                     ? "bg-blue-600 text-white shadow-md shadow-blue-200"
                                     : "bg-transparent text-gray-600 hover:bg-gray-50"
-                                }`}
+                            }`}
                         >
                             <Icon size={20} className={activeTab === tab ? "text-white" : "text-gray-400"} />
                             {tab}
