@@ -235,6 +235,18 @@ const ThemeToggle = () => {
     const [open, setOpen] = useState(false);
     const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "Light");
     const options = [["Light", Sun], ["Dark", Moon], ["System Default", Monitor]];
+    
+    useEffect(() => {
+        const root = window.document.documentElement;
+        root.classList.remove('light', 'dark');
+        if (theme === 'System Default') {
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            root.classList.add(systemTheme);
+        } else {
+            root.classList.add(theme.toLowerCase());
+        }
+    }, [theme]);
+
     const selectTheme = (t) => { setTheme(t); localStorage.setItem("theme", t); setOpen(false); };
     const Icon = options.find(([t]) => t === theme)?.[1] || Sun;
 
@@ -367,7 +379,7 @@ const ProfileDropdown = ({ user }) => {
         { label:"My Documents",     icon: FileText,       path:`${prefix}/my-documents` },
         { label:"My Subscription",  icon: CreditCard,    path:`${prefix}/subscription` },
         { label:"Security Settings",icon: Shield,        path:`${prefix}/settings` },
-        { label:"Help Center",      icon: HelpCircle,    path:"#" },
+        { label:"Help Center",      icon: HelpCircle,    path:`${prefix}/help` },
     ];
     const handleLogout = () => { setOpen(false); logout(); navigate("/login"); };
 
@@ -492,10 +504,10 @@ const Breadcrumb = () => {
     const current = ROUTE_LABELS[location.pathname] || "Page";
     const role = location.pathname.startsWith("/admin") ? "Admin" : location.pathname.startsWith("/superadmin") ? "Super Admin" : "User";
     return (
-        <div className="hidden md:flex items-center gap-2 text-sm">
-            <span className="text-slate-400 font-medium capitalize">{role} Portal</span>
+        <div className="hidden md:flex items-center gap-2 text-sm bg-slate-50/80 px-3.5 py-1.5 rounded-xl border border-slate-100">
+            <span className="text-slate-400 font-medium capitalize tracking-wide text-xs">{role} Portal</span>
             <ChevronRight size={14} className="text-slate-300"/>
-            <span className="font-semibold text-slate-800">{current}</span>
+            <span className="font-semibold text-slate-700">{current}</span>
         </div>
     );
 };
@@ -505,28 +517,31 @@ const Navbar = () => {
     const { user } = useContext(AuthContext);
 
     return (
-        <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-40 shadow-sm">
-            {/* LEFT */}
-            <div className="flex items-center gap-4">
+        <header className="h-[72px] bg-white/90 backdrop-blur-xl border-b border-slate-200/80 px-4 md:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-40 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)] transition-all">
+            {/* LEFT & CENTER */}
+            <div className="flex items-center gap-3 lg:gap-5 flex-1">
                 <MobileMenu user={user} />
-                <Breadcrumb />
-            </div>
-
-            {/* CENTER */}
-            <div className="flex-1 flex justify-center px-4">
-                <SearchBar />
+                <div className="w-full max-w-xl">
+                    <SearchBar />
+                </div>
             </div>
 
             {/* RIGHT */}
-            <div className="flex items-center gap-1.5">
-                <QuickCreateMenu />
-                <div className="hidden sm:flex items-center gap-1">
-                    <ThemeToggle />
-                    <LanguageSelector />
-                    <HelpDropdown />
+            <div className="flex items-center justify-end gap-2 md:gap-4 lg:gap-5 shrink-0">
+                <div className="flex items-center gap-2">
+                    <QuickCreateMenu />
+                    
+                    <div className="hidden lg:flex items-center">
+                        <ThemeToggle />
+                    </div>
                 </div>
-                <NotificationDropdown />
-                <ProfileDropdown user={user} />
+
+                <div className="hidden md:block w-px h-7 bg-slate-200 mx-1"></div>
+
+                <div className="flex items-center gap-2 md:gap-3">
+                    <NotificationDropdown />
+                    <ProfileDropdown user={user} />
+                </div>
             </div>
         </header>
     );
