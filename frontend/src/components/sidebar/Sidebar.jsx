@@ -87,14 +87,6 @@ const Sidebar = () => {
                 ],
             },
             {
-                title: "DOCUMENT MANAGEMENT",
-                menus: [
-                    { name: "Pending Documents", path: "/user/pending", icon: Clock3 },
-                    { name: "Approved Documents", path: "/user/approved", icon: CheckCircle },
-                    { name: "Rejected Documents", path: "/user/rejected", icon: XCircle },
-                ],
-            },
-            {
                 title: "SUBSCRIPTION",
                 menus: [
                     { name: "My Plan", path: "/user/subscription", icon: CreditCard },
