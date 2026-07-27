@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { getUserData } from '../utils/localStorage';
+import { getUserData, setUserData } from '../utils/localStorage';
 
 export const AuthContext = createContext();
 
@@ -19,12 +19,18 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
+  const updateUser = (newUserData) => {
+    const updatedUser = { ...user, ...newUserData };
+    setUser(updatedUser);
+    setUserData(updatedUser);
+  };
+
   const logout = () => {
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
