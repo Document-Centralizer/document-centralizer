@@ -1,7 +1,0 @@
-package com.documentcentralizer.service.impl;
-
-import com.documentcentralizer.service.AuthService;
-
-public class AuthServiceImpl implements AuthService {
-
-}
