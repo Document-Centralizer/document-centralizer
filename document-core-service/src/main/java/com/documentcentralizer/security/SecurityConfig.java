@@ -25,6 +25,9 @@ public class SecurityConfig {
                             "/v3/api-docs.yaml"
                     ).permitAll()
                     
+                    .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/users/**").permitAll() // Temporary for testing without JWT
+
                     .anyRequest().authenticated()
             )
 
