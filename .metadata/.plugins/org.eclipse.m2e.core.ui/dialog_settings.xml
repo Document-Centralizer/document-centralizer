@@ -6,6 +6,7 @@
 	</section>
 	<section name="MavenProjectImportWizardPage">
 		<list key="rootDirectory">
+			<item value="D:\CDAC_PROJECT\document-centralizer\document-core-service"/>
 			<item value="D:\CDAC_PROJECT\document-centralizer\document-centralizer\document-core-service"/>
 		</list>
 		<list key="projectNameTemplate">
