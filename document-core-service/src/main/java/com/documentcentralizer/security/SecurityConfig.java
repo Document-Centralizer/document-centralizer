@@ -18,6 +18,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
 
                     .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/users/**").permitAll() // Temporary for testing without JWT
 
                     .anyRequest().authenticated()
             )
