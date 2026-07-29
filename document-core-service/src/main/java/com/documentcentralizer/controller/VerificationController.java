@@ -28,6 +28,17 @@ public class VerificationController {
         return ResponseEntity.ok(response);
     }
 
+    // Approve a document
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PostMapping("/{documentId}/approve")
+    public ResponseEntity<VerificationResponseDTO> approveDocument(
+            @PathVariable Long documentId,
+            @RequestBody VerificationRequestDTO requestDTO) {
+        
+        VerificationResponseDTO response = verificationService.approveDocument(documentId, requestDTO);
+        return ResponseEntity.ok(response);
+    }
+
     // Get verification history for a document
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'USER')")
     @GetMapping("/{documentId}/history")
