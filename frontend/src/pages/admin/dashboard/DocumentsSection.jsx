@@ -1,9 +1,22 @@
 import React, { useState } from "react";
 import DocumentsTable from "../../../components/admin/DocumentsTable";
-import { documentsStats } from "../../../data/adminDashboardData";
+import { documentsStats, allDocumentsData } from "../../../data/adminDashboardData";
 
 export default function DocumentsSection() {
     const [filter, setFilter] = useState("All");
+    const [documents, setDocuments] = useState(allDocumentsData);
+
+    const handleReject = (id, reason) => {
+        setDocuments(docs => docs.map(doc => 
+            doc.id === id ? { ...doc, state: "Rejected", rejectionReason: reason } : doc
+        ));
+    };
+
+    const handleForward = (id) => {
+        setDocuments(docs => docs.map(doc => 
+            doc.id === id ? { ...doc, state: "Forwarded" } : doc
+        ));
+    };
 
     return (
         <div className="animate-in fade-in duration-300">
@@ -33,7 +46,12 @@ export default function DocumentsSection() {
                 })}
             </div>
 
-            <DocumentsTable filter={filter} />
+            <DocumentsTable 
+                filter={filter} 
+                documents={documents}
+                onReject={handleReject}
+                onForward={handleForward}
+            />
         </div>
     );
 }
