@@ -74,11 +74,4 @@ public interface DocumentService {
      */
     List<Document> getDocumentsByUser(Long userId);
 
-    /*
-     * Method: changeVerificationStatus()
-     * Purpose: Changes the verification status of a document.
-     * Input: Document ID, new status, and rejection reason (if any).
-     * Output: Updated Document object.
-     */
-    Document changeVerificationStatus(Long id, String status, String rejectionReason);
 }

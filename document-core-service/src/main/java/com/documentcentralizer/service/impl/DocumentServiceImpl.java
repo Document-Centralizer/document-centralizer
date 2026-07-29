@@ -63,7 +63,6 @@ public class DocumentServiceImpl implements DocumentService {
         document.setUser(user);
 
         // Set default values for new document
-        document.setVerificationStatus("PENDING");
         document.setIsDeleted(false);
 
         // Save document in database
@@ -125,7 +124,6 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Update only editable fields
         existingDocument.setDocumentName(documentDetails.getDocumentName());
-        existingDocument.setRemarks(documentDetails.getRemarks());
 
         // Save updated document in database
         return documentRepository.save(existingDocument);
@@ -162,7 +160,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<Document> getDocumentsByStatus(String status) {
         // Return documents matching the status
-        return documentRepository.findByVerificationStatus(status);
+        return documentRepository.findByDocumentVerificationStatus(status);
     }
 
     /*
@@ -182,32 +180,4 @@ public class DocumentServiceImpl implements DocumentService {
         return documentRepository.findByUserId(userId);
     }
 
-    /*
-     * Method: changeVerificationStatus()
-     * Purpose: Approves or rejects a document.
-     * Input: Document ID, new status, rejection reason.
-     * Output: Updated Document object.
-     * Processing:
-     * - Fetch document
-     * - Update status and rejection reason (if rejected)
-     * - Save to repository
-     */
-    @Override
-    public Document changeVerificationStatus(Long id, String status, String rejectionReason) {
-        // Find existing document
-        Document document = getDocumentById(id);
-
-        // Update verification status
-        document.setVerificationStatus(status);
-
-        // Set rejection reason if status is REJECTED
-        if ("REJECTED".equalsIgnoreCase(status)) {
-            document.setRejectionReason(rejectionReason);
-        } else {
-            document.setRejectionReason(null);
-        }
-
-        // Save updated document in database
-        return documentRepository.save(document);
-    }
 }

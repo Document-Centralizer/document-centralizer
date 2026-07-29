@@ -175,28 +175,6 @@ public class DocumentController {
         return ResponseEntity.ok(documents);
     }
 
-    /*
-     * Method: verifyDocument()
-     * Purpose: API endpoint to approve or reject a document.
-     */
-    @Operation(summary = "Verify Document", description = "Approves or rejects a document. If rejecting, a reason can be provided.", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Document verification status updated"),
-            @ApiResponse(responseCode = "400", description = "Invalid status or parameters"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "Document not found")
-    })
-    @PutMapping("/verify/{id}")
-    public ResponseEntity<Document> verifyDocument(
-            @Parameter(description = "ID of the document to verify") @PathVariable Long id,
-            @Parameter(description = "New verification status (VERIFIED or REJECTED)") @RequestParam String status,
-            @Parameter(description = "Reason for rejection (if status is REJECTED)") @RequestParam(required = false) String rejectionReason) {
-        
-        // Change verification status and return OK
-        Document updatedDocument = documentService.changeVerificationStatus(id, status, rejectionReason);
-        return ResponseEntity.ok(updatedDocument);
-    }
-
     @Operation(summary = "Download Document", description = "Downloads a document file by its ID.", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "File downloaded successfully"),

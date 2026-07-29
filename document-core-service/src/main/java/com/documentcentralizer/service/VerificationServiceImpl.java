@@ -4,21 +4,27 @@ import com.documentcentralizer.dto.VerificationRequestDTO;
 import com.documentcentralizer.dto.VerificationResponseDTO;
 import com.documentcentralizer.entity.Document;
 import com.documentcentralizer.entity.User;
-import com.documentcentralizer.entity.VerificationRecord;
+import com.documentcentralizer.entity.DocumentVerification;
+import com.documentcentralizer.entity.VerificationHistory;
 import com.documentcentralizer.repository.DocumentRepository;
 import com.documentcentralizer.repository.UserRepository;
-import com.documentcentralizer.repository.VerificationRecordRepository;
+import com.documentcentralizer.repository.DocumentVerificationRepository;
+import com.documentcentralizer.repository.VerificationHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class VerificationServiceImpl implements VerificationService {
 
     @Autowired
-    private VerificationRecordRepository verificationRecordRepository;
+    private DocumentVerificationRepository documentVerificationRepository;
+
+    @Autowired
+    private VerificationHistoryRepository verificationHistoryRepository;
 
     @Autowired
     private DocumentRepository documentRepository;
@@ -37,22 +43,105 @@ public class VerificationServiceImpl implements VerificationService {
         User adminUser = userRepository.findById(requestDTO.getAdminUserId())
                 .orElseThrow(() -> new RuntimeException("Admin User not found with ID: " + requestDTO.getAdminUserId()));
 
-        // Create new verification record
-        VerificationRecord record = new VerificationRecord();
-        record.setDocument(document);
-        record.setVerifiedBy(adminUser);
-        record.setStatus(requestDTO.getStatus());
-        record.setRemarks(requestDTO.getRemarks());
-        record.setRejectionReason(requestDTO.getRejectionReason());
+        // Check if there is an existing verification record
+        Optional<DocumentVerification> existingVerificationOpt = documentVerificationRepository.findByDocumentId(documentId);
+        
+        DocumentVerification record;
+        String previousStatus = null;
+        String actionType = "STATUS_CHANGED";
+        
+        if (existingVerificationOpt.isPresent()) {
+            record = existingVerificationOpt.get();
+            previousStatus = record.getStatus();
+            record.setVerifiedBy(adminUser);
+            record.setStatus(requestDTO.getStatus());
+            record.setRemarks(requestDTO.getRemarks());
+            record.setRejectionReason(requestDTO.getRejectionReason());
+        } else {
+            record = new DocumentVerification();
+            record.setDocument(document);
+            record.setVerifiedBy(adminUser);
+            record.setStatus(requestDTO.getStatus());
+            record.setRemarks(requestDTO.getRemarks());
+            record.setRejectionReason(requestDTO.getRejectionReason());
+            actionType = "INITIALIZED";
+        }
 
-        // Save the record
-        VerificationRecord savedRecord = verificationRecordRepository.save(record);
+        // Save the active record
+        DocumentVerification savedRecord = documentVerificationRepository.save(record);
 
-        // Update the document itself
-        document.setVerificationStatus(requestDTO.getStatus());
-        document.setRemarks(requestDTO.getRemarks());
-        document.setRejectionReason(requestDTO.getRejectionReason());
-        documentRepository.save(document);
+        // Create and save the history record
+        VerificationHistory history = new VerificationHistory();
+        history.setDocument(document);
+        history.setActionBy(adminUser);
+        history.setAction(actionType);
+        history.setPreviousStatus(previousStatus);
+        history.setNewStatus(savedRecord.getStatus());
+        history.setRemarks(savedRecord.getRemarks());
+        history.setRejectionReason(savedRecord.getRejectionReason());
+        verificationHistoryRepository.save(history);
+
+        // Map to Response DTO manually
+        VerificationResponseDTO responseDTO = new VerificationResponseDTO();
+        responseDTO.setId(savedRecord.getId());
+        responseDTO.setDocumentId(document.getId());
+        responseDTO.setVerifiedByUserId(adminUser.getId());
+        responseDTO.setStatus(savedRecord.getStatus());
+        responseDTO.setRemarks(savedRecord.getRemarks());
+        responseDTO.setRejectionReason(savedRecord.getRejectionReason());
+        responseDTO.setCreatedAt(savedRecord.getCreatedAt());
+
+        return responseDTO;
+    }
+
+    @Override
+    public VerificationResponseDTO approveDocument(Long documentId, VerificationRequestDTO requestDTO) {
+        
+        // Find document
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found with ID: " + documentId));
+
+        // Find admin user
+        User adminUser = userRepository.findById(requestDTO.getAdminUserId())
+                .orElseThrow(() -> new RuntimeException("Admin User not found with ID: " + requestDTO.getAdminUserId()));
+
+        // Check if there is an existing verification record
+        Optional<DocumentVerification> existingVerificationOpt = documentVerificationRepository.findByDocumentId(documentId);
+        
+        DocumentVerification record;
+        String previousStatus = null;
+        String actionType = "APPROVED";
+        
+        if (existingVerificationOpt.isPresent()) {
+            record = existingVerificationOpt.get();
+            previousStatus = record.getStatus();
+            record.setVerifiedBy(adminUser);
+            record.setStatus("APPROVED"); // Hardcoded status for approve
+            record.setRemarks(requestDTO.getRemarks());
+            record.setRejectionReason(null); // Clear rejection reason if approved
+        } else {
+            record = new DocumentVerification();
+            record.setDocument(document);
+            record.setVerifiedBy(adminUser);
+            record.setStatus("APPROVED"); // Hardcoded status for approve
+            record.setRemarks(requestDTO.getRemarks());
+            record.setRejectionReason(null);
+            actionType = "APPROVED"; // Can also use "INITIALIZED" if we want, but "APPROVED" makes sense
+        }
+
+        // Save the active record
+        DocumentVerification savedRecord = documentVerificationRepository.save(record);
+
+        // Create and save the history record
+        VerificationHistory history = new VerificationHistory();
+        history.setDocument(document);
+        history.setActionBy(adminUser);
+        history.setAction(actionType);
+        history.setPreviousStatus(previousStatus);
+        history.setNewStatus(savedRecord.getStatus());
+        history.setRemarks(savedRecord.getRemarks());
+        history.setRejectionReason(null);
+        verificationHistoryRepository.save(history);
 
         // Map to Response DTO manually
         VerificationResponseDTO responseDTO = new VerificationResponseDTO();
@@ -69,18 +158,18 @@ public class VerificationServiceImpl implements VerificationService {
 
     @Override
     public List<VerificationResponseDTO> getDocumentVerificationHistory(Long documentId) {
-        List<VerificationRecord> records = verificationRecordRepository.findByDocumentId(documentId);
+        List<VerificationHistory> historyRecords = verificationHistoryRepository.findByDocumentIdOrderByCreatedAtDesc(documentId);
         List<VerificationResponseDTO> responseDTOs = new ArrayList<>();
 
-        for (VerificationRecord record : records) {
+        for (VerificationHistory history : historyRecords) {
             VerificationResponseDTO dto = new VerificationResponseDTO();
-            dto.setId(record.getId());
-            dto.setDocumentId(record.getDocument().getId());
-            dto.setVerifiedByUserId(record.getVerifiedBy().getId());
-            dto.setStatus(record.getStatus());
-            dto.setRemarks(record.getRemarks());
-            dto.setRejectionReason(record.getRejectionReason());
-            dto.setCreatedAt(record.getCreatedAt());
+            dto.setId(history.getId());
+            dto.setDocumentId(history.getDocument().getId());
+            dto.setVerifiedByUserId(history.getActionBy().getId());
+            dto.setStatus(history.getNewStatus());
+            dto.setRemarks(history.getRemarks());
+            dto.setRejectionReason(history.getRejectionReason());
+            dto.setCreatedAt(history.getCreatedAt());
             responseDTOs.add(dto);
         }
 

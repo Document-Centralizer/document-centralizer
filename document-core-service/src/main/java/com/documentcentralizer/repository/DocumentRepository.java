@@ -23,7 +23,7 @@ import java.util.List;
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     // Find documents by verification status
-    List<Document> findByVerificationStatus(String verificationStatus);
+    List<Document> findByDocumentVerificationStatus(String status);
 
     // Find documents by document type
     List<Document> findByDocumentType(String documentType);

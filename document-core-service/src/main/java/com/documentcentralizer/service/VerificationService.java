@@ -9,5 +9,7 @@ public interface VerificationService {
     
     VerificationResponseDTO verifyDocument(Long documentId, VerificationRequestDTO requestDTO);
     
+    VerificationResponseDTO approveDocument(Long documentId, VerificationRequestDTO requestDTO);
+    
     List<VerificationResponseDTO> getDocumentVerificationHistory(Long documentId);
 }

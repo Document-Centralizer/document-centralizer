@@ -11,25 +11,28 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "verification_records")
+@Table(name = "verification_history")
 @Getter
 @Setter
 @NoArgsConstructor
-public class VerificationRecord extends BaseEntity {
+public class VerificationHistory extends BaseEntity {
 
-    // The document being verified
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
-    // The admin user who did the verification
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "verified_by_user_id", nullable = false)
-    private User verifiedBy;
+    @JoinColumn(name = "action_by_user_id", nullable = false)
+    private User actionBy;
 
-    // Status like "VERIFIED", "REJECTED"
     @Column(nullable = false, length = 50)
-    private String status;
+    private String action;
+
+    @Column(length = 50)
+    private String previousStatus;
+
+    @Column(length = 50)
+    private String newStatus;
 
     @Column(length = 255)
     private String remarks;
