@@ -1,5 +1,7 @@
 package com.documentcentralizer.controller;
 
+import com.documentcentralizer.dto.UserProfileDTO;
+import com.documentcentralizer.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -8,13 +10,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.documentcentralizer.dto.UpdateProfileRequestDTO;
-import com.documentcentralizer.dto.UserProfileDTO;
-import com.documentcentralizer.service.UserService;
-
-import jakarta.validation.Valid;
-
-@CrossOrigin(origins = "*")
+/*
+ * Class Name : UserController
+ *
+ * Purpose:
+ * Exposes REST API endpoints for User operations.
+ *
+ * Responsibility:
+ * - Handle user profile and dashboard requests
+ *
+ * Author:
+ * CDAC Project
+ */
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "User APIs", description = "Endpoints for regular user operations like profile management and dashboard")
@@ -26,7 +33,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @Operation(summary = "View User Profile", description = "Retrieves the profile information.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "View User Profile", description = "Retrieves the profile information of the currently authenticated user.", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved profile"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),

@@ -1,6 +1,9 @@
 package com.documentcentralizer.service;
 
-import com.documentcentralizer.entity.Document;
+import com.documentcentralizer.dto.DocumentResponseDTO;
+import com.documentcentralizer.dto.DocumentUploadRequestDTO;
+import com.documentcentralizer.dto.DocumentUpdateRequestDTO;
+
 import java.util.List;
 
 /*
@@ -21,34 +24,34 @@ public interface DocumentService {
     /*
      * Method: saveDocument()
      * Purpose: Saves a new document into the system.
-     * Input: Document object and user ID.
-     * Output: Saved Document object.
+     * Input: MultipartFile, DocumentUploadRequestDTO object and user ID.
+     * Output: Saved DocumentResponseDTO object.
      */
-    Document saveDocument(Document document, Long userId);
+    DocumentResponseDTO saveDocument(org.springframework.web.multipart.MultipartFile file, DocumentUploadRequestDTO requestDTO, Long userId);
 
     /*
      * Method: getAllDocuments()
      * Purpose: Retrieves all active documents.
      * Input: None.
-     * Output: List of active documents.
+     * Output: List of DocumentResponseDTOs.
      */
-    List<Document> getAllDocuments();
+    List<DocumentResponseDTO> getAllDocuments();
 
     /*
      * Method: getDocumentById()
      * Purpose: Retrieves a document by its ID.
      * Input: Document ID.
-     * Output: Document object.
+     * Output: DocumentResponseDTO object.
      */
-    Document getDocumentById(Long id);
+    DocumentResponseDTO getDocumentById(Long id);
 
     /*
      * Method: updateDocument()
      * Purpose: Updates document details.
-     * Input: Document ID and updated Document object.
-     * Output: Updated Document object.
+     * Input: Document ID and updated DocumentUpdateRequestDTO object.
+     * Output: Updated DocumentResponseDTO object.
      */
-    Document updateDocument(Long id, Document documentDetails);
+    DocumentResponseDTO updateDocument(Long id, DocumentUpdateRequestDTO requestDTO);
 
     /*
      * Method: deleteDocument()
@@ -62,16 +65,23 @@ public interface DocumentService {
      * Method: getDocumentsByStatus()
      * Purpose: Retrieves documents by verification status.
      * Input: Status string.
-     * Output: List of Documents.
+     * Output: List of DocumentResponseDTOs.
      */
-    List<Document> getDocumentsByStatus(String status);
+    List<DocumentResponseDTO> getDocumentsByStatus(String status);
 
     /*
      * Method: getDocumentsByUser()
      * Purpose: Retrieves documents by user ID.
      * Input: User ID.
-     * Output: List of Documents.
+     * Output: List of DocumentResponseDTOs.
      */
-    List<Document> getDocumentsByUser(Long userId);
+    List<DocumentResponseDTO> getDocumentsByUser(Long userId);
 
+    /*
+     * Method: changeVerificationStatus()
+     * Purpose: Changes the verification status of a document.
+     * Input: Document ID, new status, and rejection reason (if any).
+     * Output: Updated DocumentResponseDTO object.
+     */
+    DocumentResponseDTO changeVerificationStatus(Long id, String status, String rejectionReason);
 }
