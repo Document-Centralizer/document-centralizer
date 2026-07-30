@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { getUserData, setUserData } from '../utils/localStorage';
+import { getUserData, setUserData, removeUserData, removeToken } from '../utils/localStorage';
 
 export const AuthContext = createContext();
 
@@ -27,6 +27,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    removeUserData();
+    removeToken();
   };
 
   return (

@@ -1,10 +1,14 @@
-import React from "react";
-import { allDocumentsData } from "../../data/adminDashboardData";
+import React, { useState } from "react";
+import { Eye, X, Send } from "lucide-react";
 
-export default function DocumentsTable({ filter }) {
+export default function DocumentsTable({ filter, documents, onReject, onForward }) {
+    const [viewDoc, setViewDoc] = useState(null);
+    const [rejectDoc, setRejectDoc] = useState(null);
+    const [rejectReason, setRejectReason] = useState("");
+
     const filteredDocs = filter === "All" 
-        ? allDocumentsData 
-        : allDocumentsData.filter(doc => doc.state === filter);
+        ? documents 
+        : documents.filter(doc => doc.state === filter);
 
     return (
         <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
@@ -16,6 +20,7 @@ export default function DocumentsTable({ filter }) {
                         <th className="px-6 py-4">Owner</th>
                         <th className="px-6 py-4">Date</th>
                         <th className="px-6 py-4">State</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 bg-white">
@@ -29,21 +34,116 @@ export default function DocumentsTable({ filter }) {
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                                     doc.state === 'Approved' ? 'bg-green-100 text-green-700' : 
                                     doc.state === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                    doc.state === 'Forwarded' ? 'bg-purple-100 text-purple-700' :
                                     'bg-yellow-100 text-yellow-700'
                                 }`}>
                                     {doc.state}
                                 </span>
                             </td>
+                            <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                <button 
+                                    onClick={() => setViewDoc(doc)} 
+                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" 
+                                    title="View"
+                                >
+                                    <Eye size={18} />
+                                </button>
+                                {doc.state === 'Pending' && (
+                                    <>
+                                        <button 
+                                            onClick={() => setRejectDoc(doc)} 
+                                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition" 
+                                            title="Reject"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                        <button 
+                                            onClick={() => onForward(doc.id)} 
+                                            className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition" 
+                                            title="Forward to Super Admin"
+                                        >
+                                            <Send size={18} />
+                                        </button>
+                                    </>
+                                )}
+                            </td>
                         </tr>
                     )) : (
                         <tr>
-                            <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                            <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                                 No {filter !== "All" ? filter.toLowerCase() : ""} documents found.
                             </td>
                         </tr>
                     )}
                 </tbody>
             </table>
+
+            {/* View Modal */}
+            {viewDoc && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Document Details</h3>
+                        <div className="space-y-3 mb-6 text-sm text-gray-600">
+                            <p><strong className="text-gray-800">Name:</strong> {viewDoc.name}</p>
+                            <p><strong className="text-gray-800">Category:</strong> {viewDoc.category}</p>
+                            <p><strong className="text-gray-800">Owner:</strong> {viewDoc.owner}</p>
+                            <p><strong className="text-gray-800">Date:</strong> {viewDoc.date}</p>
+                            <p><strong className="text-gray-800">State:</strong> {viewDoc.state}</p>
+                            {viewDoc.rejectionReason && (
+                                <p><strong className="text-red-600">Rejection Reason:</strong> {viewDoc.rejectionReason}</p>
+                            )}
+                        </div>
+                        <div className="flex justify-end">
+                            <button 
+                                onClick={() => setViewDoc(null)} 
+                                className="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reject Modal */}
+            {rejectDoc && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
+                        <h3 className="text-xl font-bold text-red-600 mb-2">Reject Document</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Please provide a reason for rejecting <strong>{rejectDoc.name}</strong>.
+                        </p>
+                        <textarea
+                            className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 mb-4"
+                            rows="4"
+                            placeholder="Reason for rejection based on quality..."
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                        ></textarea>
+                        <div className="flex justify-end gap-3">
+                            <button 
+                                onClick={() => { setRejectDoc(null); setRejectReason(""); }} 
+                                className="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    if(rejectReason.trim()) {
+                                        onReject(rejectDoc.id, rejectReason);
+                                        setRejectDoc(null);
+                                        setRejectReason("");
+                                    }
+                                }} 
+                                disabled={!rejectReason.trim()}
+                                className="px-4 py-2 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition disabled:opacity-50"
+                            >
+                                Submit Rejection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

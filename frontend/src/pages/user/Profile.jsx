@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -10,33 +9,7 @@ import {
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 
-// ---- DUMMY DATA ----
-const userData = {
-    firstName: "Vaibhav", lastName: "Khot",
-    fullName: "Vaibhav Khot",
-    username: "vaibhav_khot",
-    email: "vaibhav@example.com",
-    phone: "+91 98765 43210",
-    dob: "15 March 2000",
-    gender: "Male",
-    address: "Flat 402, Sunrise Apartment",
-    city: "Pune", state: "Maharashtra", country: "India", pincode: "411001",
-    userId: "USR-2026-10042",
-    role: "Registered User",
-    plan: "Premium",
-    joined: "January 2026",
-    lastLogin: "Today, 1:14 PM",
-    lastPasswordChange: "15 May 2026",
-    emailVerified: true,
-    mobileVerified: true,
-    twoFA: false,
-    passwordStrength: "Strong",
-    location: "Pune, Maharashtra",
-    avatarInitials: "VK",
-    completeness: 85,
-    docs: { total: 28, approved: 20, pending: 5, rejected: 3 },
-};
-
+// Dummy activity data
 const activityLog = [
     { id: 1, action: "Successful Login",      time: "Today, 1:14 PM",  type: "login",    icon: ShieldCheck },
     { id: 2, action: "Document Approved",     time: "Yesterday",        type: "approve",  icon: CheckCircle },
@@ -78,13 +51,23 @@ const ProgressCircle = ({ pct, size = 120, stroke = 8 }) => {
 };
 
 // ---- EDIT PROFILE MODAL ----
-const EditProfileModal = ({ onClose }) => {
+const EditProfileModal = ({ userData, onClose, onSave }) => {
+    // Initialized exactly with backend fields
     const [form, setForm] = useState({
-        firstName: userData.firstName, lastName: userData.lastName,
-        phone: userData.phone, address: userData.address,
-        city: userData.city, state: userData.state, country: userData.country, pincode: userData.pincode,
+        firstName: userData?.firstName || '',
+        lastName: userData?.lastName || '',
+        mobileNumber: userData?.mobileNumber || '',
+        dob: userData?.dob || '',
+        gender: userData?.gender || '',
+        address: userData?.address || '',
+        city: userData?.city || '',
+        state: userData?.state || '',
+        country: userData?.country || '',
+        pincode: userData?.pincode || '',
     });
+    
     const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
             <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
@@ -100,7 +83,13 @@ const EditProfileModal = ({ onClose }) => {
                             <input name={n} value={form[n]} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 focus:bg-white" /></div>
                         ))}
                     </div>
-                    {[["phone","Phone Number"],["address","Address"]].map(([n,l]) => (
+                    <div className="grid grid-cols-2 gap-4">
+                        {[["mobileNumber","Mobile Number"],["dob","Date of Birth"]].map(([n,l]) => (
+                            <div key={n}><label className="block text-xs font-medium text-slate-600 mb-1">{l}</label>
+                            <input name={n} value={form[n]} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 focus:bg-white" /></div>
+                        ))}
+                    </div>
+                    {[["address","Address"]].map(([n,l]) => (
                         <div key={n}><label className="block text-xs font-medium text-slate-600 mb-1">{l}</label>
                         <input name={n} value={form[n]} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 focus:bg-white" /></div>
                     ))}
@@ -113,7 +102,7 @@ const EditProfileModal = ({ onClose }) => {
                 </div>
                 <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
                     <button onClick={onClose} className="flex-1 bg-white border border-slate-200 text-slate-700 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition text-sm">Cancel</button>
-                    <button onClick={onClose} className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-medium hover:bg-slate-800 transition text-sm">Save Changes</button>
+                    <button onClick={() => onSave(form)} className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-medium hover:bg-slate-800 transition text-sm">Save Changes</button>
                 </div>
             </motion.div>
         </div>
@@ -170,14 +159,86 @@ const Profile = () => {
     const [showEdit, setShowEdit]       = useState(false);
     const [showPwd, setShowPwd]         = useState(false);
     const [photo, setPhoto]             = useState(null);
+    const [userData, setUserData]       = useState(null);
     const photoRef = useRef(null);
 
-    useEffect(() => { const t = setTimeout(() => setIsLoading(false), 700); return () => clearTimeout(t); }, []);
+    // Hardcoded test email for now since JWT is not implemented yet
+    const testEmail = "prasad@gmail.com"; 
+
+    const fetchProfile = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`http://localhost:8080/api/users/profile?email=${testEmail}`);
+            if (response.ok) {
+                const data = await response.json();
+                // Map the backend data to the UI structure, adding some hardcoded fillers for visuals
+                setUserData({
+                    ...data,
+                    fullName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+                    userId: "USR-2026-10042",
+                    plan: "Premium",
+                    joined: "January 2026",
+                    lastLogin: "Today, 1:14 PM",
+                    lastPasswordChange: "15 May 2026",
+                    emailVerified: true,
+                    mobileVerified: true,
+                    twoFA: false,
+                    passwordStrength: "Strong",
+                    location: `${data.city || 'City'}, ${data.state || 'State'}`,
+                    avatarInitials: data.firstName ? data.firstName[0].toUpperCase() : "U",
+                    completeness: data.address ? 100 : 85,
+                    docs: { total: 28, approved: 20, pending: 5, rejected: 3 }
+                });
+            } else {
+                console.error("Failed to fetch profile");
+            }
+        } catch (error) {
+            console.error("Error fetching profile:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProfile();
+    }, []);
+
+    const handleSaveProfile = async (updatedForm) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/users/profile?email=${testEmail}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedForm)
+            });
+            if (response.ok) {
+                // Refresh data from server to reflect changes safely
+                await fetchProfile();
+                setShowEdit(false);
+            } else {
+                console.error("Update failed");
+                alert("Failed to update profile. Check the fields.");
+            }
+        } catch (error) {
+            console.error("Error updating profile:", error);
+        }
+    };
 
     const handlePhoto = (e) => {
         const file = e.target.files[0];
         if (file) setPhoto(URL.createObjectURL(file));
     };
+
+    if (isLoading || !userData) {
+        return (
+            <div className="max-w-7xl mx-auto space-y-6 pb-16 p-4">
+                <div className="space-y-6">
+                    {[1,2,3].map(i => <div key={i} className="h-40 bg-slate-100 animate-pulse rounded-2xl"></div>)}
+                </div>
+            </div>
+        );
+    }
 
     const d = userData.docs;
 
@@ -196,280 +257,272 @@ const Profile = () => {
                 </motion.button>
             </div>
 
-            {isLoading ? (
-                <div className="space-y-6">
-                    {[1,2,3].map(i => <div key={i} className="h-40 bg-slate-100 animate-pulse rounded-2xl"></div>)}
+            {/* Profile Hero Card */}
+            <Card className="overflow-hidden">
+                <div className="h-28 bg-gradient-to-r from-slate-800 to-slate-900 relative">
+                    <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
                 </div>
-            ) : (
-                <>
-                    {/* Profile Hero Card */}
-                    <Card className="overflow-hidden">
-                        <div className="h-28 bg-gradient-to-r from-slate-800 to-slate-900 relative">
-                            <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
+                <CardContent className="px-8 pb-8 -mt-14 relative z-10">
+                    <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
+                        {/* Avatar */}
+                        <div className="relative group">
+                            <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-slate-900 flex items-center justify-center cursor-pointer"
+                                onClick={() => photoRef.current.click()}>
+                                {photo ? <img src={photo} alt="avatar" className="w-full h-full object-cover" />
+                                    : <span className="text-3xl font-black text-white">{userData.avatarInitials}</span>}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                                    <Camera size={24} className="text-white" />
+                                </div>
+                            </div>
+                            <button onClick={() => photoRef.current.click()}
+                                className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-blue-700 transition">
+                                <Upload size={14} />
+                            </button>
+                            <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
                         </div>
-                        <CardContent className="px-8 pb-8 -mt-14 relative z-10">
-                            <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
-                                {/* Avatar */}
-                                <div className="relative group">
-                                    <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-slate-900 flex items-center justify-center cursor-pointer"
-                                        onClick={() => photoRef.current.click()}>
-                                        {photo ? <img src={photo} alt="avatar" className="w-full h-full object-cover" />
-                                            : <span className="text-3xl font-black text-white">{userData.avatarInitials}</span>}
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
-                                            <Camera size={24} className="text-white" />
+                        {/* Info */}
+                        <div className="flex-1 pt-4 md:pt-0">
+                            <div className="flex flex-wrap items-center gap-3 mb-1">
+                                <h2 className="text-2xl font-black text-slate-800">{userData.fullName}</h2>
+                                <span className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                    <ShieldCheck size={12}/> Verified
+                                </span>
+                                <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 border border-yellow-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                    <Star size={12}/> Premium
+                                </span>
+                            </div>
+                            <p className="text-slate-500 text-sm">{userData.email}</p>
+                            <div className="flex flex-wrap gap-6 mt-4 text-sm text-slate-500">
+                                <span className="flex items-center gap-1.5"><User size={14}/> {userData.role || 'USER'}</span>
+                                <span className="flex items-center gap-1.5"><MapPin size={14}/> {userData.location}</span>
+                                <span className="flex items-center gap-1.5"><Calendar size={14}/> Joined {userData.joined}</span>
+                                <span className="flex items-center gap-1.5"><Activity size={14}/> Last login: {userData.lastLogin}</span>
+                            </div>
+                        </div>
+                        {/* Stats Quick */}
+                        <div className="grid grid-cols-2 gap-3">
+                            {[["28","Total","text-slate-800"],["20","Approved","text-green-700"],["5","Pending","text-yellow-700"],["3","Rejected","text-red-700"]].map(([v,l,c]) => (
+                                <div key={l} className="text-center bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+                                    <p className={`text-xl font-black ${c}`}>{v}</p>
+                                    <p className="text-xs text-slate-500 mt-0.5">{l}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Main Grid */}
+            <div className="flex flex-col xl:flex-row gap-6">
+                {/* LEFT — Personal Info, Account Info, Security, Activity */}
+                <div className="flex-1 space-y-6">
+
+                    {/* Personal Information */}
+                    <Card>
+                        <CardHeader title="Personal Information" action={
+                            <button onClick={() => setShowEdit(true)} className="flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700"><Edit3 size={14}/> Edit</button>
+                        }/>
+                        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            {[
+                                { label: "First Name",    value: userData.firstName,      icon: User },
+                                { label: "Last Name",     value: userData.lastName,       icon: User },
+                                { label: "Email",         value: userData.email,          icon: Mail },
+                                { label: "Mobile Number", value: userData.mobileNumber,   icon: Phone },
+                                { label: "Date of Birth", value: userData.dob,            icon: Calendar },
+                                { label: "Gender",        value: userData.gender,         icon: User },
+                                { label: "Address",       value: userData.address,        icon: MapPin },
+                                { label: "City",          value: userData.city,           icon: MapPin },
+                                { label: "State",         value: userData.state,          icon: MapPin },
+                                { label: "Country",       value: userData.country,        icon: MapPin },
+                                { label: "Pincode",       value: userData.pincode,        icon: MapPin },
+                            ].map((item, i) => (
+                                <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+                                    <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-1"><item.icon size={12}/> {item.label}</p>
+                                    <p className="text-sm font-semibold text-slate-800">{item.value || '-'}</p>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+
+                    {/* Account Information */}
+                    <Card>
+                        <CardHeader title="Account Information" />
+                        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            {[
+                                { label: "User ID",           value: userData.userId },
+                                { label: "Username",          value: userData.username || '-' },
+                                { label: "Role",              value: userData.role || 'USER' },
+                                { label: "Subscription Plan", value: userData.plan },
+                                { label: "Registration Date", value: userData.joined },
+                                { label: "Last Login",        value: userData.lastLogin },
+                                { label: "Account Status",    value: "Active" },
+                                { label: "Email Verified",    value: userData.emailVerified ? "Yes ✓" : "No" },
+                                { label: "Mobile Verified",   value: userData.mobileVerified ? "Yes ✓" : "No" },
+                            ].map((item, i) => (
+                                <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+                                    <p className="text-xs text-slate-400 mb-1">{item.label}</p>
+                                    <p className="text-sm font-semibold text-slate-800">{item.value}</p>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+
+                    {/* Security Card */}
+                    <Card>
+                        <CardHeader title="Account Security" />
+                        <CardContent className="space-y-4">
+                            {[
+                                { label: "Password",              value: userData.passwordStrength, icon: Lock,         ok: true },
+                                { label: "Email Verified",        value: "Verified",                icon: Mail,         ok: true },
+                                { label: "Mobile Verified",       value: "Verified",                icon: Smartphone,   ok: true },
+                                { label: "Two-Factor Auth (2FA)", value: "Disabled",               icon: ShieldCheck,  ok: false },
+                                { label: "Last Password Change",  value: userData.lastPasswordChange, icon: Key,        ok: true },
+                            ].map((s, i) => (
+                                <div key={i} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.ok ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                                            <s.icon size={18}/>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-slate-800">{s.label}</p>
+                                            <p className={`text-xs ${s.ok ? 'text-green-600' : 'text-red-500'}`}>{s.value}</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => photoRef.current.click()}
-                                        className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-blue-700 transition">
-                                        <Upload size={14} />
-                                    </button>
-                                    <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+                                    {s.ok ? <CheckCircle size={18} className="text-green-500"/> : <AlertTriangle size={18} className="text-red-400"/>}
                                 </div>
-                                {/* Info */}
-                                <div className="flex-1 pt-4 md:pt-0">
-                                    <div className="flex flex-wrap items-center gap-3 mb-1">
-                                        <h2 className="text-2xl font-black text-slate-800">{userData.fullName}</h2>
-                                        <span className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                            <ShieldCheck size={12}/> Verified
-                                        </span>
-                                        <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 border border-yellow-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                            <Star size={12}/> Premium
-                                        </span>
-                                    </div>
-                                    <p className="text-slate-500 text-sm">{userData.email}</p>
-                                    <div className="flex flex-wrap gap-6 mt-4 text-sm text-slate-500">
-                                        <span className="flex items-center gap-1.5"><User size={14}/> {userData.role}</span>
-                                        <span className="flex items-center gap-1.5"><MapPin size={14}/> {userData.location}</span>
-                                        <span className="flex items-center gap-1.5"><Calendar size={14}/> Joined {userData.joined}</span>
-                                        <span className="flex items-center gap-1.5"><Activity size={14}/> Last login: {userData.lastLogin}</span>
-                                    </div>
-                                </div>
-                                {/* Stats Quick */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    {[["28","Total","text-slate-800"],["20","Approved","text-green-700"],["5","Pending","text-yellow-700"],["3","Rejected","text-red-700"]].map(([v,l,c]) => (
-                                        <div key={l} className="text-center bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-                                            <p className={`text-xl font-black ${c}`}>{v}</p>
-                                            <p className="text-xs text-slate-500 mt-0.5">{l}</p>
-                                        </div>
-                                    ))}
-                                </div>
+                            ))}
+                            <div className="flex flex-wrap gap-3 pt-2">
+                                <button onClick={() => setShowPwd(true)} className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition flex items-center gap-2"><Key size={16}/> Change Password</button>
+                                <button className="border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition flex items-center gap-2"><ShieldCheck size={16}/> Enable 2FA</button>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Main Grid */}
-                    <div className="flex flex-col xl:flex-row gap-6">
-                        {/* LEFT — Personal Info, Account Info, Security, Activity */}
-                        <div className="flex-1 space-y-6">
-
-                            {/* Personal Information */}
-                            <Card>
-                                <CardHeader title="Personal Information" action={
-                                    <button onClick={() => setShowEdit(true)} className="flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700"><Edit3 size={14}/> Edit</button>
-                                }/>
-                                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                    {[
-                                        { label: "First Name",    value: userData.firstName,  icon: User },
-                                        { label: "Last Name",     value: userData.lastName,   icon: User },
-                                        { label: "Email",         value: userData.email,      icon: Mail },
-                                        { label: "Phone Number",  value: userData.phone,      icon: Phone },
-                                        { label: "Date of Birth", value: userData.dob,        icon: Calendar },
-                                        { label: "Gender",        value: userData.gender,     icon: User },
-                                        { label: "Address",       value: userData.address,    icon: MapPin },
-                                        { label: "City",          value: userData.city,       icon: MapPin },
-                                        { label: "State",         value: userData.state,      icon: MapPin },
-                                        { label: "Country",       value: userData.country,    icon: MapPin },
-                                        { label: "Pincode",       value: userData.pincode,    icon: MapPin },
-                                    ].map((item, i) => (
-                                        <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-                                            <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-1"><item.icon size={12}/> {item.label}</p>
-                                            <p className="text-sm font-semibold text-slate-800">{item.value}</p>
+                    {/* Activity Timeline */}
+                    <Card>
+                        <CardHeader title="Recent Account Activity" />
+                        <CardContent className="space-y-4">
+                            <div className="relative space-y-4 before:absolute before:inset-0 before:ml-5 before:h-full before:w-px before:bg-slate-100">
+                                {activityLog.map((act, idx) => (
+                                    <motion.div key={act.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.07 }}
+                                        className="relative flex items-start gap-4">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white shadow-sm ${activityColor[act.type]}`}>
+                                            <act.icon size={16}/>
                                         </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-
-                            {/* Account Information */}
-                            <Card>
-                                <CardHeader title="Account Information" />
-                                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                    {[
-                                        { label: "User ID",           value: userData.userId },
-                                        { label: "Username",          value: userData.username },
-                                        { label: "Role",              value: userData.role },
-                                        { label: "Subscription Plan", value: userData.plan },
-                                        { label: "Registration Date", value: userData.joined },
-                                        { label: "Last Login",        value: userData.lastLogin },
-                                        { label: "Account Status",    value: "Active" },
-                                        { label: "Email Verified",    value: userData.emailVerified ? "Yes ✓" : "No" },
-                                        { label: "Mobile Verified",   value: userData.mobileVerified ? "Yes ✓" : "No" },
-                                    ].map((item, i) => (
-                                        <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-                                            <p className="text-xs text-slate-400 mb-1">{item.label}</p>
-                                            <p className="text-sm font-semibold text-slate-800">{item.value}</p>
+                                        <div className="flex-1 flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
+                                            <p className="text-sm font-semibold text-slate-800">{act.action}</p>
+                                            <p className="text-xs text-slate-400 ml-4 shrink-0">{act.time}</p>
                                         </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                            {/* Security Card */}
-                            <Card>
-                                <CardHeader title="Account Security" />
-                                <CardContent className="space-y-4">
-                                    {[
-                                        { label: "Password",              value: userData.passwordStrength, icon: Lock,         ok: true },
-                                        { label: "Email Verified",        value: "Verified",                icon: Mail,         ok: true },
-                                        { label: "Mobile Verified",       value: "Verified",                icon: Smartphone,   ok: true },
-                                        { label: "Two-Factor Auth (2FA)", value: "Disabled",               icon: ShieldCheck,  ok: false },
-                                        { label: "Last Password Change",  value: userData.lastPasswordChange, icon: Key,        ok: true },
-                                    ].map((s, i) => (
-                                        <div key={i} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.ok ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                                                    <s.icon size={18}/>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-slate-800">{s.label}</p>
-                                                    <p className={`text-xs ${s.ok ? 'text-green-600' : 'text-red-500'}`}>{s.value}</p>
-                                                </div>
-                                            </div>
-                                            {s.ok ? <CheckCircle size={18} className="text-green-500"/> : <AlertTriangle size={18} className="text-red-400"/>}
-                                        </div>
-                                    ))}
-                                    <div className="flex flex-wrap gap-3 pt-2">
-                                        <button onClick={() => setShowPwd(true)} className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition flex items-center gap-2"><Key size={16}/> Change Password</button>
-                                        <button className="border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition flex items-center gap-2"><ShieldCheck size={16}/> Enable 2FA</button>
+                </div>
+
+                {/* RIGHT SIDEBAR */}
+                <div className="w-full xl:w-80 space-y-6">
+
+                    {/* Profile Completeness */}
+                    <Card>
+                        <CardHeader title="Profile Completeness" />
+                        <CardContent className="pt-0 flex flex-col items-center gap-4">
+                            <ProgressCircle pct={userData.completeness} />
+                            <div className="w-full space-y-2">
+                                <p className="text-sm font-semibold text-slate-700">To improve, add:</p>
+                                {["Upload Profile Photo","Enable 2FA","Complete Address"].map((tip, i) => (
+                                    <div key={i} className="flex items-center gap-2 text-xs text-slate-500 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                                        <AlertTriangle size={14} className="text-amber-500 shrink-0"/> {tip}
                                     </div>
-                                </CardContent>
-                            </Card>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                            {/* Activity Timeline */}
-                            <Card>
-                                <CardHeader title="Recent Account Activity" />
-                                <CardContent className="space-y-4">
-                                    <div className="relative space-y-4 before:absolute before:inset-0 before:ml-5 before:h-full before:w-px before:bg-slate-100">
-                                        {activityLog.map((act, idx) => (
-                                            <motion.div key={act.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.07 }}
-                                                className="relative flex items-start gap-4">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white shadow-sm ${activityColor[act.type]}`}>
-                                                    <act.icon size={16}/>
-                                                </div>
-                                                <div className="flex-1 flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-                                                    <p className="text-sm font-semibold text-slate-800">{act.action}</p>
-                                                    <p className="text-xs text-slate-400 ml-4 shrink-0">{act.time}</p>
-                                                </div>
-                                            </motion.div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                    {/* Account Summary */}
+                    <Card>
+                        <CardHeader title="Account Summary" />
+                        <CardContent className="pt-0 space-y-3">
+                            {[
+                                { label: "Total Documents", value: d.total, color: "text-slate-800" },
+                                { label: "Approved",        value: d.approved, color: "text-green-700" },
+                                { label: "Pending",         value: d.pending,  color: "text-yellow-700" },
+                                { label: "Rejected",        value: d.rejected, color: "text-red-700" },
+                            ].map((r, i) => (
+                                <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+                                    <span className="text-sm text-slate-500">{r.label}</span>
+                                    <span className={`text-lg font-black ${r.color}`}>{r.value}</span>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
 
-                        </div>
+                    {/* Security Status */}
+                    <Card>
+                        <CardHeader title="Security Status" />
+                        <CardContent className="pt-0 space-y-3">
+                            {[
+                                { label: "Password",  ok: true },
+                                { label: "Email",     ok: userData.emailVerified },
+                                { label: "Mobile",    ok: userData.mobileVerified },
+                                { label: "2FA",       ok: userData.twoFA },
+                            ].map((s, i) => (
+                                <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                                    <span className="text-sm text-slate-600">{s.label}</span>
+                                    {s.ok
+                                        ? <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200"><CheckCircle size={12}/> Secure</span>
+                                        : <span className="flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200"><AlertTriangle size={12}/> Off</span>
+                                    }
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
 
-                        {/* RIGHT SIDEBAR */}
-                        <div className="w-full xl:w-80 space-y-6">
+                    {/* Subscription Card */}
+                    <Card>
+                        <CardHeader title="Subscription" />
+                        <CardContent className="pt-0 space-y-4">
+                            <div className="bg-slate-900 rounded-xl p-4 text-white">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="flex items-center gap-1.5 text-yellow-400 text-xs font-bold uppercase"><Star size={12}/> Premium</span>
+                                    <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Active</span>
+                                </div>
+                                <p className="text-xl font-black">₹199 <span className="text-sm font-normal text-slate-400">/ month</span></p>
+                                <p className="text-xs text-slate-400 mt-1">Renews: 25 August 2026</p>
+                            </div>
+                            <Link to="/user/subscription" className="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-700 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition">
+                                View Subscription <ChevronRight size={16}/>
+                            </Link>
+                        </CardContent>
+                    </Card>
 
-                            {/* Profile Completeness */}
-                            <Card>
-                                <CardHeader title="Profile Completeness" />
-                                <CardContent className="pt-0 flex flex-col items-center gap-4">
-                                    <ProgressCircle pct={userData.completeness} />
-                                    <div className="w-full space-y-2">
-                                        <p className="text-sm font-semibold text-slate-700">To improve, add:</p>
-                                        {["Upload Profile Photo","Enable 2FA","Complete Address"].map((tip, i) => (
-                                            <div key={i} className="flex items-center gap-2 text-xs text-slate-500 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                                <AlertTriangle size={14} className="text-amber-500 shrink-0"/> {tip}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                    {/* Quick Actions */}
+                    <Card>
+                        <CardHeader title="Quick Actions" />
+                        <CardContent className="pt-0 space-y-2">
+                            {[
+                                { label: "Upload Document",  icon: UploadCloud, to: "/user/upload" },
+                                { label: "My Documents",     icon: FileText,    to: "/user/my-documents" },
+                                { label: "Subscription",     icon: Star,        to: "/user/subscription" },
+                                { label: "Settings",         icon: Settings,    to: "/user/settings" },
+                            ].map((a, i) => (
+                                <Link key={i} to={a.to} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100 group">
+                                    <span className="flex items-center gap-3 text-sm font-medium text-slate-700">
+                                        <a.icon size={16} className="text-slate-400 group-hover:text-slate-700" /> {a.label}
+                                    </span>
+                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-500"/>
+                                </Link>
+                            ))}
+                        </CardContent>
+                    </Card>
 
-                            {/* Account Summary */}
-                            <Card>
-                                <CardHeader title="Account Summary" />
-                                <CardContent className="pt-0 space-y-3">
-                                    {[
-                                        { label: "Total Documents", value: d.total, color: "text-slate-800" },
-                                        { label: "Approved",        value: d.approved, color: "text-green-700" },
-                                        { label: "Pending",         value: d.pending,  color: "text-yellow-700" },
-                                        { label: "Rejected",        value: d.rejected, color: "text-red-700" },
-                                    ].map((r, i) => (
-                                        <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                                            <span className="text-sm text-slate-500">{r.label}</span>
-                                            <span className={`text-lg font-black ${r.color}`}>{r.value}</span>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-
-                            {/* Security Status */}
-                            <Card>
-                                <CardHeader title="Security Status" />
-                                <CardContent className="pt-0 space-y-3">
-                                    {[
-                                        { label: "Password",  ok: true },
-                                        { label: "Email",     ok: userData.emailVerified },
-                                        { label: "Mobile",    ok: userData.mobileVerified },
-                                        { label: "2FA",       ok: userData.twoFA },
-                                    ].map((s, i) => (
-                                        <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                                            <span className="text-sm text-slate-600">{s.label}</span>
-                                            {s.ok
-                                                ? <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200"><CheckCircle size={12}/> Secure</span>
-                                                : <span className="flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200"><AlertTriangle size={12}/> Off</span>
-                                            }
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-
-                            {/* Subscription Card */}
-                            <Card>
-                                <CardHeader title="Subscription" />
-                                <CardContent className="pt-0 space-y-4">
-                                    <div className="bg-slate-900 rounded-xl p-4 text-white">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <span className="flex items-center gap-1.5 text-yellow-400 text-xs font-bold uppercase"><Star size={12}/> Premium</span>
-                                            <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Active</span>
-                                        </div>
-                                        <p className="text-xl font-black">₹199 <span className="text-sm font-normal text-slate-400">/ month</span></p>
-                                        <p className="text-xs text-slate-400 mt-1">Renews: 25 August 2026</p>
-                                    </div>
-                                    <Link to="/user/subscription" className="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-700 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition">
-                                        View Subscription <ChevronRight size={16}/>
-                                    </Link>
-                                </CardContent>
-                            </Card>
-
-                            {/* Quick Actions */}
-                            <Card>
-                                <CardHeader title="Quick Actions" />
-                                <CardContent className="pt-0 space-y-2">
-                                    {[
-                                        { label: "Upload Document",  icon: UploadCloud, to: "/user/upload" },
-                                        { label: "My Documents",     icon: FileText,    to: "/user/my-documents" },
-                                        { label: "Subscription",     icon: Star,        to: "/user/subscription" },
-                                        { label: "Settings",         icon: Settings,    to: "/user/settings" },
-                                    ].map((a, i) => (
-                                        <Link key={i} to={a.to} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100 group">
-                                            <span className="flex items-center gap-3 text-sm font-medium text-slate-700">
-                                                <a.icon size={16} className="text-slate-400 group-hover:text-slate-700" /> {a.label}
-                                            </span>
-                                            <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-500"/>
-                                        </Link>
-                                    ))}
-                                </CardContent>
-                            </Card>
-
-                        </div>
-                    </div>
-                </>
-            )}
+                </div>
+            </div>
 
             {/* MODALS */}
             <AnimatePresence>
-                {showEdit && <EditProfileModal onClose={() => setShowEdit(false)} />}
+                {showEdit && <EditProfileModal userData={userData} onSave={handleSaveProfile} onClose={() => setShowEdit(false)} />}
                 {showPwd  && <ChangePasswordModal onClose={() => setShowPwd(false)} />}
             </AnimatePresence>
         </div>
