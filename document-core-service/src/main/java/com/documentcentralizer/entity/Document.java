@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -68,17 +70,8 @@ public class Document extends BaseEntity {
     @Schema(description = "Timestamp when the document was uploaded")
     private LocalDateTime uploadedAt;
 
-    @Column(nullable = false, length = 50)
-    @Schema(description = "Verification status of the document", example = "PENDING")
-    private String verificationStatus; // Example: PENDING, VERIFIED, REJECTED
-
-    @Column(length = 255)
-    @Schema(description = "Reason for rejection if status is REJECTED", example = "Document is unreadable")
-    private String rejectionReason;
-
-    @Column(length = 255)
-    @Schema(description = "Additional remarks for the document", example = "Please review urgently")
-    private String remarks;
+    @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private DocumentVerification documentVerification;
 
     @Column(nullable = false)
     @Schema(description = "Soft delete flag", example = "false")

@@ -127,7 +127,6 @@ public class DocumentServiceImpl implements DocumentService {
         document.setFileFormat(file.getContentType());
         
         // Set default values for new document
-        document.setVerificationStatus("PENDING");
         document.setIsDeleted(false);
 
         // Save metadata into database

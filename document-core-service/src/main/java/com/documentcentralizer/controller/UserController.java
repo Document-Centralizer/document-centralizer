@@ -46,6 +46,21 @@ public class UserController {
         return ResponseEntity.ok(profile);
     }
 
+    @Operation(summary = "Update User Profile", description = "Updates the profile information.", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PutMapping("/profile")
+    public ResponseEntity<UserProfileDTO> updateUserProfile(
+            @RequestParam String email,
+            @Valid @RequestBody UpdateProfileRequestDTO request) {
+        
+        UserProfileDTO updatedProfile = userService.updateUserProfile(email, request);
+        return ResponseEntity.ok(updatedProfile);
+    }
+
     @Operation(summary = "User Dashboard Data", description = "Retrieves statistics and summary data for the user dashboard.", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved dashboard data"),
@@ -53,17 +68,6 @@ public class UserController {
     })
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard() {
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "Update User Profile", description = "Updates the profile information of the currently authenticated user.", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
-    @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(@RequestBody Object updateRequest) {
         return ResponseEntity.ok().build();
     }
 }
