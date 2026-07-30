@@ -1,13 +1,28 @@
 package com.documentcentralizer.service.impl;
 
+import com.documentcentralizer.dto.DocumentResponseDTO;
+import com.documentcentralizer.dto.DocumentUploadRequestDTO;
+import com.documentcentralizer.dto.DocumentUpdateRequestDTO;
 import com.documentcentralizer.entity.Document;
 import com.documentcentralizer.entity.User;
 import com.documentcentralizer.repository.DocumentRepository;
 import com.documentcentralizer.repository.UserRepository;
 import com.documentcentralizer.service.DocumentService;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.PostConstruct;
 
 /*
  * Class Name : DocumentServiceImpl
@@ -16,7 +31,7 @@ import java.util.List;
  * This class contains the business logic related to documents.
  *
  * Responsibility:
- * - Save document information
+ * - Save document information and upload files
  * - Fetch document details
  * - Update document details
  * - Delete document records
@@ -29,122 +44,185 @@ public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
+
+    // Configurable local directory to store uploaded files
+    @Value("${file.upload-dir:uploads/}")
+    private String uploadDir;
 
     // Constructor Injection
-    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository) {
+    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository, ModelMapper modelMapper) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
+        this.modelMapper = modelMapper;
+    }
+
+    /*
+     * Method: init()
+     * Purpose: Initialize the upload directory during bean creation.
+     */
+    @PostConstruct
+    public void init() {
+        // Create upload directory if it does not exist
+        File directory = new File(uploadDir);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+    }
+
+    private DocumentResponseDTO convertToDTO(Document document) {
+        DocumentResponseDTO dto = modelMapper.map(document, DocumentResponseDTO.class);
+        if (document.getUser() != null) {
+            dto.setUserId(document.getUser().getId());
+        }
+        return dto;
     }
 
     /*
      * Method: saveDocument()
-     * Purpose: Saves document details into the database.
-     * Input: Document object received from controller and user ID.
-     * Output: Saved Document object.
+     *
+     * Purpose:
+     * Uploads a document received from the client.
+     *
+     * Input:
+     * MultipartFile uploaded by the user, metadata DTO, and User ID.
+     *
+     * Output:
+     * Saved document metadata.
+     *
      * Processing:
-     * - Check if document with same stored name exists
-     * - Validate user exists
-     * - Set default status
-     * - Save document using repository
-     * - Return saved entity
+     * 1. Validate uploaded file.
+     * 2. Check if user exists.
+     * 3. Generate unique filename.
+     * 4. Save file locally (can be swapped for cloud storage later).
+     * 5. Store metadata in database.
+     * 6. Return success response.
      */
     @Override
-    public Document saveDocument(Document document, Long userId) {
-        // Check whether document with same stored name exists
-        if (documentRepository.existsByStoredFileName(document.getStoredFileName())) {
-            throw new RuntimeException("Document with this stored file name already exists");
-        }
+    public DocumentResponseDTO saveDocument(MultipartFile file, DocumentUploadRequestDTO requestDTO, Long userId) {
+        // 1. Validate uploaded file
+        validateFile(file);
 
-        // Check if user exists
+        // 2. Check if user exists
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        // Assign user to document
-        document.setUser(user);
+        // 3. Generate unique filename
+        String originalFileName = file.getOriginalFilename();
+        String storedFileName = UUID.randomUUID().toString() + "_" + originalFileName;
 
+        // 4. Save file locally (Storage logic separated)
+        String filePath = saveFileLocally(file, storedFileName);
+
+        // 5. Store metadata in database
+        // Map DTO to Entity
+        Document document = modelMapper.map(requestDTO, Document.class);
+
+        // Assign user and metadata to document
+        document.setUser(user);
+        document.setOriginalFileName(originalFileName);
+        document.setStoredFileName(storedFileName);
+        document.setFilePath(filePath);
+        document.setFileSize(file.getSize());
+        document.setFileFormat(file.getContentType());
+        
         // Set default values for new document
         document.setVerificationStatus("PENDING");
         document.setIsDeleted(false);
 
-        // Save document in database
-        return documentRepository.save(document);
+        // Save metadata into database
+        Document savedDocument = documentRepository.save(document);
+        
+        // 6. Return successful response
+        return convertToDTO(savedDocument);
     }
 
     /*
-     * Method: getAllDocuments()
-     * Purpose: Retrieves all active documents from the system.
-     * Input: None.
-     * Output: List of active Document objects.
-     * Processing:
-     * - Fetch all documents where isDeleted is false
+     * Method: validateFile()
+     * Purpose: Validates the uploaded file for empty status, blank name, type and size.
      */
-    @Override
-    public List<Document> getAllDocuments() {
-        // Fetch and return active documents
-        return documentRepository.findByIsDeletedFalse();
+    private void validateFile(MultipartFile file) {
+        // Check if file is empty
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File cannot be empty");
+        }
+
+        // Check if file name is blank
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            throw new IllegalArgumentException("File name cannot be blank");
+        }
+
+        // Validate maximum file size (Maximum 10 MB)
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("File size exceeds the maximum limit of 10 MB");
+        }
+
+        // Check supported file type
+        String contentType = file.getContentType();
+        if (contentType == null || !(contentType.equals("application/pdf") || 
+            contentType.equals("image/jpeg") || contentType.equals("image/jpg") || 
+            contentType.equals("image/png"))) {
+            throw new IllegalArgumentException("Unsupported file format. Allowed formats are: PDF, JPG, JPEG, PNG");
+        }
     }
 
     /*
-     * Method: getDocumentById()
-     * Purpose: Retrieves specific document details by ID.
-     * Input: Document ID.
-     * Output: Document object.
-     * Processing:
-     * - Fetch document by ID
-     * - Throw exception if not found or if it is deleted
+     * Method: saveFileLocally()
+     * Purpose: Saves the file to local storage. Designed to be easily replaced by cloud storage later.
      */
+    private String saveFileLocally(MultipartFile file, String storedFileName) {
+        try {
+            Path path = Paths.get(uploadDir, storedFileName);
+            // Save file to local storage
+            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+            return path.toAbsolutePath().toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to store file: " + e.getMessage());
+        }
+    }
+
     @Override
-    public Document getDocumentById(Long id) {
-        // Fetch document by id
+    public List<DocumentResponseDTO> getAllDocuments() {
+        return documentRepository.findByIsDeletedFalse().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private Document getDocumentEntityById(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document not found with ID: " + id));
 
-        // Check if document is deleted
         if (document.getIsDeleted()) {
             throw new RuntimeException("Document is deleted");
         }
 
-        // Return fetched document
         return document;
     }
 
-    /*
-     * Method: updateDocument()
-     * Purpose: Updates document metadata.
-     * Input: Document ID and updated Document details.
-     * Output: Updated Document object.
-     * Processing:
-     * - Find existing document
-     * - Update allowed fields
-     * - Save to repository
-     */
     @Override
-    public Document updateDocument(Long id, Document documentDetails) {
-        // Find existing document
-        Document existingDocument = getDocumentById(id);
-
-        // Update only editable fields
-        existingDocument.setDocumentName(documentDetails.getDocumentName());
-        existingDocument.setRemarks(documentDetails.getRemarks());
-
-        // Save updated document in database
-        return documentRepository.save(existingDocument);
+    public DocumentResponseDTO getDocumentById(Long id) {
+        Document document = getDocumentEntityById(id);
+        return convertToDTO(document);
     }
 
-    /*
-     * Method: deleteDocument()
-     * Purpose: Performs soft delete on a document.
-     * Input: Document ID.
-     * Output: None.
-     * Processing:
-     * - Fetch document by ID
-     * - Set isDeleted to true
-     * - Save document
-     */
+    @Override
+    public DocumentResponseDTO updateDocument(Long id, DocumentUpdateRequestDTO requestDTO) {
+        // Find existing document
+        Document existingDocument = getDocumentEntityById(id);
+
+        // Use ModelMapper to update fields (it skips nulls as per our config)
+        modelMapper.map(requestDTO, existingDocument);
+
+        // Save updated document in database
+        Document updatedDocument = documentRepository.save(existingDocument);
+        return convertToDTO(updatedDocument);
+    }
+
     @Override
     public void deleteDocument(Long id) {
         // Find existing document
-        Document document = getDocumentById(id);
+        Document document = getDocumentEntityById(id);
 
         // Soft delete the record
         document.setIsDeleted(true);
@@ -153,49 +231,29 @@ public class DocumentServiceImpl implements DocumentService {
         documentRepository.save(document);
     }
 
-    /*
-     * Method: getDocumentsByStatus()
-     * Purpose: Retrieves documents by their verification status.
-     * Input: Status string.
-     * Output: List of Document objects.
-     */
     @Override
-    public List<Document> getDocumentsByStatus(String status) {
-        // Return documents matching the status
-        return documentRepository.findByVerificationStatus(status);
+    public List<DocumentResponseDTO> getDocumentsByStatus(String status) {
+        return documentRepository.findByVerificationStatus(status).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    /*
-     * Method: getDocumentsByUser()
-     * Purpose: Retrieves all documents uploaded by a specific user.
-     * Input: User ID.
-     * Output: List of Document objects.
-     */
     @Override
-    public List<Document> getDocumentsByUser(Long userId) {
+    public List<DocumentResponseDTO> getDocumentsByUser(Long userId) {
         // Check if user exists
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("User not found with ID: " + userId);
         }
 
-        // Return user's documents
-        return documentRepository.findByUserId(userId);
+        return documentRepository.findByUserId(userId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    /*
-     * Method: changeVerificationStatus()
-     * Purpose: Approves or rejects a document.
-     * Input: Document ID, new status, rejection reason.
-     * Output: Updated Document object.
-     * Processing:
-     * - Fetch document
-     * - Update status and rejection reason (if rejected)
-     * - Save to repository
-     */
     @Override
-    public Document changeVerificationStatus(Long id, String status, String rejectionReason) {
+    public DocumentResponseDTO changeVerificationStatus(Long id, String status, String rejectionReason) {
         // Find existing document
-        Document document = getDocumentById(id);
+        Document document = getDocumentEntityById(id);
 
         // Update verification status
         document.setVerificationStatus(status);
@@ -208,6 +266,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         // Save updated document in database
-        return documentRepository.save(document);
+        Document updatedDocument = documentRepository.save(document);
+        return convertToDTO(updatedDocument);
     }
 }

@@ -1,5 +1,7 @@
 package com.documentcentralizer.controller;
 
+import com.documentcentralizer.dto.UserProfileDTO;
+import com.documentcentralizer.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -16,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
  *
  * Responsibility:
  * - Handle user profile and dashboard requests
- * - Note: This is a stub implementation created for Swagger documentation purposes.
  *
  * Author:
  * CDAC Project
@@ -26,6 +27,12 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "User APIs", description = "Endpoints for regular user operations like profile management and dashboard")
 public class UserController {
 
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
     @Operation(summary = "View User Profile", description = "Retrieves the profile information of the currently authenticated user.", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved profile"),
@@ -33,8 +40,10 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/profile")
-    public ResponseEntity<?> getProfile() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<UserProfileDTO> getUserProfile(@RequestParam String email) {
+        // Temporarily accepting email as a parameter for testing purposes (since JWT is not implemented)
+        UserProfileDTO profile = userService.getUserProfile(email);
+        return ResponseEntity.ok(profile);
     }
 
     @Operation(summary = "User Dashboard Data", description = "Retrieves statistics and summary data for the user dashboard.", security = @SecurityRequirement(name = "bearerAuth"))
@@ -56,33 +65,5 @@ public class UserController {
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(@RequestBody Object updateRequest) {
         return ResponseEntity.ok().build();
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.documentcentralizer.dto.UserProfileDTO;
-import com.documentcentralizer.service.UserService;
-
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-
-    private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
-    /**
-     * API to retrieve user profile information.
-     * Follows the existing project API standards by using ResponseEntity.
-     */
-    @GetMapping("/profile")
-    public ResponseEntity<UserProfileDTO> getUserProfile(@RequestParam String email) {
-        // Temporarily accepting email as a parameter for testing purposes (since JWT is not implemented)
-        UserProfileDTO profile = userService.getUserProfile(email);
-        return ResponseEntity.ok(profile);
     }
 }
