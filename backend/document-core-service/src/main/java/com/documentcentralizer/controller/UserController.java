@@ -63,7 +63,10 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(@RequestBody Object updateRequest) {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<UserProfileDTO> updateProfile(
+            @RequestParam String email, 
+            @RequestBody com.documentcentralizer.dto.UpdateProfileRequestDTO updateDto) {
+        UserProfileDTO updatedProfile = userService.updateAccountSettings(email, updateDto);
+        return ResponseEntity.ok(updatedProfile);
     }
 }

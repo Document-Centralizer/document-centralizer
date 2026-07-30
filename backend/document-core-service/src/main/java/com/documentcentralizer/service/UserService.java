@@ -9,4 +9,12 @@ public interface UserService {
      * @return UserProfileDTO containing safe profile details
      */
     UserProfileDTO getUserProfile(String email);
+
+    /**
+     * Updates the account settings for the given user email.
+     * @param email The email of the user
+     * @param dto The profile details to update
+     * @return UserProfileDTO containing safe profile details
+     */
+    UserProfileDTO updateAccountSettings(String email, com.documentcentralizer.dto.UpdateProfileRequestDTO dto);
 }
