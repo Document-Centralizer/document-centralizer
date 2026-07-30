@@ -28,4 +28,18 @@ public class UserServiceImpl implements UserService {
         // Return complete user profile details (safely mapped to DTO without password)
         return modelMapper.map(user, UserProfileDTO.class);
     }
+
+    @Override
+    public UserProfileDTO updateAccountSettings(String email, com.documentcentralizer.dto.UpdateProfileRequestDTO dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        
+        // Ensure only non-null properties from DTO overwrite existing fields
+        modelMapper.getConfiguration().setSkipNullEnabled(true);
+        modelMapper.map(dto, user);
+        
+        userRepository.save(user);
+        
+        return modelMapper.map(user, UserProfileDTO.class);
+    }
 }
