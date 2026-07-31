@@ -20,12 +20,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
 /**
  * SecurityConfig handles all the security configurations for the application.
  * It manages authentication (verifying who the user is) and authorization (verifying what the user can do).
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // Enables method-level security like @PreAuthorize
 public class SecurityConfig {
 
     private final UserDetailsService customUserDetailsService;
