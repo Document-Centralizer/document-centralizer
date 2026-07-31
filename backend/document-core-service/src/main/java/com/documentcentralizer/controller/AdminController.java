@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 /*
  * Class Name : AdminController
  *
@@ -16,12 +18,10 @@ import java.util.List;
  *
  * Responsibility:
  * - Handle administrative tasks like document approval and rejection
- *
- * Author:
- * CDAC Project
  */
 @RestController
 @RequestMapping("/api/admin")
+@PreAuthorize("hasRole('ADMIN')") // Double security check ensuring only ADMIN can access these methods
 public class AdminController {
 
     private final DocumentService documentService;
