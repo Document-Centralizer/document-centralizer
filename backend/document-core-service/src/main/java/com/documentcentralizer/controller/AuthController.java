@@ -9,115 +9,100 @@ import com.documentcentralizer.dto.RegisterRequestDTO;
 import com.documentcentralizer.service.AuthService;
 import jakarta.validation.Valid;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import com.documentcentralizer.security.JwtUtil;
+import java.util.Map;
+import com.documentcentralizer.service.RefreshTokenService;
+import com.documentcentralizer.entity.RefreshToken;
+import com.documentcentralizer.dto.RefreshTokenRequestDTO;
+import com.documentcentralizer.entity.User;
 
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Authentication APIs", description = "Endpoints for user registration, login, and password management")
 public class AuthController {
 
     private final AuthService authService;
-    private final org.springframework.security.authentication.AuthenticationManager authMgr;
-    private final com.documentcentralizer.security.JwtUtil jwtUtil;
+    private final AuthenticationManager authMgr;
+    private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthController(AuthService authService, 
-                          org.springframework.security.authentication.AuthenticationManager authMgr, 
-                          com.documentcentralizer.security.JwtUtil jwtUtil) {
+                          AuthenticationManager authMgr, 
+                          JwtUtil jwtUtil,
+                          RefreshTokenService refreshTokenService) {
         this.authService = authService;
         this.authMgr = authMgr;
         this.jwtUtil = jwtUtil;
+        this.refreshTokenService = refreshTokenService;
     }
 
-    @Operation(summary = "Register a new user", description = "Registers a new user in the system with the provided details.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "User registered successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
-            @ApiResponse(responseCode = "409", description = "User already exists")
-    })
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDTO> register(
-            @Parameter(description = "User registration details")
-            @Valid @RequestBody RegisterRequestDTO request) {
+    public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
 
         AuthResponseDTO response = authService.register(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Login an existing user", description = "Authenticates a user and returns a JWT token.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Login successful"),
-            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid credentials")
-    })
     @PostMapping("/login")
-    public ResponseEntity<?> login(
-            @Parameter(description = "User login credentials")
-            @Valid @RequestBody LoginRequestDTO request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO request) {
 
         try {
             // 1. Create authentication token with credentials
-            org.springframework.security.core.Authentication authToken = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+            Authentication authToken = new UsernamePasswordAuthenticationToken(
                     request.getEmail(), request.getPassword());
             
             // 2. Authenticate using AuthenticationManager
-            org.springframework.security.core.Authentication auth = authMgr.authenticate(authToken);
+            Authentication auth = authMgr.authenticate(authToken);
             
             // 3. Generate JWT token
             String jwt = jwtUtil.createToken(auth); 
             
-            // 4. Return token
-            // Creating a simple response object on the fly to match the PDF's LoginResponse
-            return ResponseEntity.ok(java.util.Map.of("token", jwt));
+            // 4. Generate Refresh Token
+            User user = (User) auth.getPrincipal();
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
             
-        } catch (org.springframework.security.core.AuthenticationException e) {
+            // 5. Return tokens
+            // Creating a simple response object on the fly to match the PDF's LoginResponse
+            return ResponseEntity.ok(Map.of("token", jwt, "refreshToken", refreshToken.getToken()));
+            
+        } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
     }
 
-    @Operation(summary = "Refresh JWT Token", description = "Generates a new JWT token using a valid refresh token.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken() {
-        // Stub for documentation purposes
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequestDTO request) {
+        // Validate the refresh token and generate a new JWT for the user.
+        // This allows users to stay logged in without re-entering credentials when their short-lived JWT expires.
+        try {
+            return refreshTokenService.findByToken(request.getRefreshToken())
+                    .map(refreshTokenService::verifyExpiration)
+                    .map(RefreshToken::getUser)
+                    .map(user -> {
+                        String token = jwtUtil.createToken(new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
+                        return ResponseEntity.ok(Map.of("token", token, "refreshToken", request.getRefreshToken()));
+                    })
+                    .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
     }
 
-    @Operation(summary = "Logout user", description = "Logs out the user and invalidates their token.", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Logged out successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         // Stub for documentation purposes
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Forgot Password", description = "Initiates password reset process and sends an email.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Password reset email sent"),
-            @ApiResponse(responseCode = "404", description = "User not found")
-    })
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         // Stub for documentation purposes
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Reset Password", description = "Resets the user's password using a valid token.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid or expired token")
-    })
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
         // Stub for documentation purposes
