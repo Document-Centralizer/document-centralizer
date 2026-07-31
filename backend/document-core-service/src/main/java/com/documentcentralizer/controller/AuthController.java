@@ -22,9 +22,15 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 public class AuthController {
 
     private final AuthService authService;
+    private final org.springframework.security.authentication.AuthenticationManager authMgr;
+    private final com.documentcentralizer.security.JwtUtil jwtUtil;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, 
+                          org.springframework.security.authentication.AuthenticationManager authMgr, 
+                          com.documentcentralizer.security.JwtUtil jwtUtil) {
         this.authService = authService;
+        this.authMgr = authMgr;
+        this.jwtUtil = jwtUtil;
     }
 
     @Operation(summary = "Register a new user", description = "Registers a new user in the system with the provided details.")
@@ -49,12 +55,28 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid credentials")
     })
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(
+    public ResponseEntity<?> login(
             @Parameter(description = "User login credentials")
             @Valid @RequestBody LoginRequestDTO request) {
 
-        AuthResponseDTO response = authService.login(request);
-        return ResponseEntity.ok(response);
+        try {
+            // 1. Create authentication token with credentials
+            org.springframework.security.core.Authentication authToken = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                    request.getEmail(), request.getPassword());
+            
+            // 2. Authenticate using AuthenticationManager
+            org.springframework.security.core.Authentication auth = authMgr.authenticate(authToken);
+            
+            // 3. Generate JWT token
+            String jwt = jwtUtil.createToken(auth); 
+            
+            // 4. Return token
+            // Creating a simple response object on the fly to match the PDF's LoginResponse
+            return ResponseEntity.ok(java.util.Map.of("token", jwt));
+            
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
     }
 
     @Operation(summary = "Refresh JWT Token", description = "Generates a new JWT token using a valid refresh token.")
