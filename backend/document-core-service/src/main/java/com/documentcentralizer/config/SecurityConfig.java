@@ -1,5 +1,6 @@
 package com.documentcentralizer.config;
 
+import com.documentcentralizer.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,17 +26,17 @@ public class SecurityConfig {
 
     private final UserDetailsService customUserDetailsService;
     
-    // NOTE: Commented out to prevent compilation errors until your teammate implements it.
-    // private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    // Injecting the JwtFilter created in Task 41
+    private final JwtFilter jwtFilter;
 
     /**
      * Constructor injection for required dependencies.
      * We inject CustomUserDetailsService (which loads user data from the database)
-     * and JwtAuthenticationFilter (which intercepts requests to check the JWT token).
+     * and JwtFilter (which intercepts requests to check the JWT token).
      */
-    public SecurityConfig(UserDetailsService customUserDetailsService /*, JwtAuthenticationFilter jwtAuthenticationFilter*/) {
+    public SecurityConfig(UserDetailsService customUserDetailsService, JwtFilter jwtFilter) {
         this.customUserDetailsService = customUserDetailsService;
-        // this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtFilter = jwtFilter;
     }
 
     /**
@@ -120,8 +121,8 @@ public class SecurityConfig {
         // We want to intercept the request and check for our JWT token FIRST.
         // If the token is valid, we manually set the user as logged in, bypassing the need for form login.
         
-        // NOTE: Uncomment this line once your teammate implements JwtAuthenticationFilter
-        // http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        // Adding the JwtFilter created in Task 41 into the filter chain
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         // Build and return the configured security chain
         return http.build();
