@@ -37,7 +37,6 @@ const VerificationQueue = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -45,7 +44,7 @@ const VerificationQueue = () => {
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      const data = await superAdminService.getDocuments({ search: searchTerm, status: statusFilter });
+      const data = await superAdminService.getDocuments({ search: searchTerm });
       setDocuments(data);
       setCurrentPage(1);
     } catch (err) {
@@ -57,7 +56,7 @@ const VerificationQueue = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm]);
 
   const filteredDocs = useMemo(() => documents, [documents]);
   const totalPages = Math.ceil(filteredDocs.length / itemsPerPage);
@@ -80,7 +79,7 @@ const VerificationQueue = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
           <input 
@@ -90,19 +89,6 @@ const VerificationQueue = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           />
-        </div>
-        <div className="relative w-full sm:w-48">
-          <Filter size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-          <select 
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none bg-white"
-          >
-            <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Under Review">Under Review</option>
-            <option value="Escalated">Escalated</option>
-          </select>
         </div>
       </div>
 

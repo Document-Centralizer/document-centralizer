@@ -46,6 +46,9 @@ public class DocumentResponseDTO {
     @Schema(description = "Additional remarks", example = "Please review")
     private String remarks;
 
+    @Schema(description = "OCR extracted text from the document")
+    private String ocrText;
+
     @Schema(description = "ID of the user who uploaded the document", example = "5")
     private Long userId;
 }

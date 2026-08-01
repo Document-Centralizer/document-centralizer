@@ -51,6 +51,12 @@ public class AdminController {
         return ResponseEntity.ok(rejectedDocument);
     }
 
+    @PutMapping("/documents/{id}/forward")
+    public ResponseEntity<DocumentResponseDTO> forwardDocument(@PathVariable Long id) {
+        DocumentResponseDTO forwardedDocument = documentService.changeVerificationStatus(id, "FORWARDED_TO_SUPERADMIN", null);
+        return ResponseEntity.ok(forwardedDocument);
+    }
+
     @GetMapping("/dashboard")
     public ResponseEntity<com.documentcentralizer.dto.DashboardStatsDTO> getDashboard() {
         return ResponseEntity.ok(documentService.getDashboardStats());

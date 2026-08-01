@@ -1,21 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DocumentsTable from "../../../components/admin/DocumentsTable";
-import { documentsStats, allDocumentsData } from "../../../data/adminDashboardData";
+import { documentsStats } from "../../../data/adminDashboardData";
+import api from "../../../services/api";
 
 export default function DocumentsSection() {
     const [filter, setFilter] = useState("All");
-    const [documents, setDocuments] = useState(allDocumentsData);
+    const [documents, setDocuments] = useState([]);
 
-    const handleReject = (id, reason) => {
-        setDocuments(docs => docs.map(doc => 
-            doc.id === id ? { ...doc, state: "Rejected", rejectionReason: reason } : doc
-        ));
+    useEffect(() => {
+        fetchDocuments();
+    }, []);
+
+    const fetchDocuments = async () => {
+        try {
+            const response = await api.get('/documents/');
+            const mappedDocs = response.data.map(doc => ({
+                id: doc.id,
+                name: doc.documentName,
+                category: doc.documentType,
+                owner: "User " + doc.userId, // We don't have the username in DTO
+                date: doc.uploadedAt ? doc.uploadedAt.split('T')[0] : 'N/A',
+                state: doc.verificationStatus,
+                ocrText: doc.ocrText,
+                rejectionReason: doc.rejectionReason
+            }));
+            setDocuments(mappedDocs);
+        } catch (error) {
+            console.error("Failed to fetch documents:", error);
+        }
     };
 
-    const handleForward = (id) => {
-        setDocuments(docs => docs.map(doc => 
-            doc.id === id ? { ...doc, state: "Forwarded" } : doc
-        ));
+    const handleReject = async (id, reason) => {
+        try {
+            await api.put(`/admin/documents/${id}/reject?reason=${encodeURIComponent(reason)}`);
+            fetchDocuments();
+        } catch (error) {
+            console.error("Failed to reject document:", error);
+        }
+    };
+
+    const handleForward = async (id) => {
+        try {
+            await api.put(`/admin/documents/${id}/forward`);
+            fetchDocuments();
+        } catch (error) {
+            console.error("Failed to forward document:", error);
+        }
     };
 
     return (
