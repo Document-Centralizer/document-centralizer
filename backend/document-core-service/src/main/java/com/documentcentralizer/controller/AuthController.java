@@ -108,9 +108,9 @@ public class AuthController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-        // Stub for documentation purposes
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody com.documentcentralizer.dto.ForgotPasswordRequest request) {
+        authService.processForgotPassword(request);
+        return ResponseEntity.ok(java.util.Map.of("message", "If the email exists, a password reset link has been sent."));
     }
 
     @Operation(summary = "Reset Password", description = "Resets the user's password using a valid token.")
@@ -119,8 +119,12 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid or expired token")
     })
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        // Stub for documentation purposes
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody com.documentcentralizer.dto.ResetPasswordRequest request) {
+        try {
+            authService.processResetPassword(request);
+            return ResponseEntity.ok(java.util.Map.of("message", "Password reset successfully."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
     }
 }

@@ -39,16 +39,6 @@ public class SecurityConfig {
         this.jwtFilter = jwtFilter;
     }
 
-    /**
-     * Creates BCrypt password encoder bean.
-     * This encoder encrypts user passwords before storing them in the database.
-     * We use BCrypt because passwords should never be stored in plain text.
-     * It prevents hackers from reading passwords even if the database is compromised.
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     /**
      * Creates the AuthenticationManager bean.
@@ -68,10 +58,9 @@ public class SecurityConfig {
      * and use passwordEncoder to verify the password matches."
      */
     @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(customUserDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
+    public AuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(customUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
 
@@ -80,7 +69,7 @@ public class SecurityConfig {
      * This is the most important method where we define which APIs are public and which are secured.
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
         
         // 1. Disable CSRF (Cross-Site Request Forgery)
         // Why? Because we are using JWT (tokens) instead of session cookies.
@@ -113,7 +102,7 @@ public class SecurityConfig {
 
         // 4. Register the Authentication Provider
         // We tell HttpSecurity to use our configured DaoAuthenticationProvider
-        http.authenticationProvider(authenticationProvider());
+        http.authenticationProvider(authenticationProvider);
 
         // 5. Register JWT Filter
         // Why add it before UsernamePasswordAuthenticationFilter?

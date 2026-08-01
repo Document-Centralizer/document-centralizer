@@ -9,4 +9,7 @@ public interface AuthService {
 
     AuthResponseDTO login(LoginRequestDTO request);
 
+    void processForgotPassword(com.documentcentralizer.dto.ForgotPasswordRequest request);
+
+    void processResetPassword(com.documentcentralizer.dto.ResetPasswordRequest request);
 }
