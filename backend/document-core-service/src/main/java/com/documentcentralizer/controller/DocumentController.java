@@ -181,9 +181,22 @@ public class DocumentController {
     @Operation(summary = "Download Document", description = "Downloads a document file by its ID.", security = @SecurityRequirement(name = "bearerAuth"))
 
     @GetMapping("/{id}/download")
-    public ResponseEntity<?> downloadDocument(@Parameter(description = "ID of the document to download") @PathVariable Long id) {
-        // Stub for download document functionality requested in Swagger requirements
-        return ResponseEntity.ok().build();
+    public ResponseEntity<org.springframework.core.io.Resource> downloadDocument(@Parameter(description = "ID of the document to download") @PathVariable Long id) {
+        
+        // 1. Get the physical file resource from the service
+        org.springframework.core.io.Resource resource = documentService.downloadDocumentAsResource(id);
+        
+        // 2. Fetch the document details to get its original name
+        DocumentResponseDTO documentDetails = documentService.getDocumentById(id);
+        
+        // 3. Prepare the HTTP header to tell the browser this is an attachment
+        String headerValue = "attachment; filename=\"" + documentDetails.getOriginalFileName() + "\"";
+        
+        // 4. Send the file to the user
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, headerValue)
+                .body(resource);
     }
 
     /*
