@@ -46,16 +46,6 @@ public class SecurityConfig {
         this.jwtFilter = jwtFilter;
     }
 
-    /**
-     * Creates BCrypt password encoder bean.
-     * This encoder encrypts user passwords before storing them in the database.
-     * We use BCrypt because passwords should never be stored in plain text.
-     * It prevents hackers from reading passwords even if the database is compromised.
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     /**
      * Creates the AuthenticationManager bean.
@@ -75,9 +65,9 @@ public class SecurityConfig {
      * and use passwordEncoder to verify the password matches."
      */
     @Bean
-    public AuthenticationProvider authenticationProvider() {
+    public AuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(customUserDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
+        provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
 
@@ -86,7 +76,7 @@ public class SecurityConfig {
      * This is the most important method where we define which APIs are public and which are secured.
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
         
         // 1. Enable CORS using our custom configuration source
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
@@ -116,7 +106,7 @@ public class SecurityConfig {
 
         // 4. Register the Authentication Provider
         // We tell HttpSecurity to use our configured DaoAuthenticationProvider
-        http.authenticationProvider(authenticationProvider());
+        http.authenticationProvider(authenticationProvider);
 
         // 5. Register JWT Filter before UsernamePasswordAuthenticationFilter
         // Adding the JwtFilter into the filter chain

@@ -98,14 +98,18 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-        // Stub for documentation purposes
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody com.documentcentralizer.dto.ForgotPasswordRequest request) {
+        authService.processForgotPassword(request);
+        return ResponseEntity.ok(java.util.Map.of("message", "If the email exists, a password reset link has been sent."));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        // Stub for documentation purposes
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody com.documentcentralizer.dto.ResetPasswordRequest request) {
+        try {
+            authService.processResetPassword(request);
+            return ResponseEntity.ok(java.util.Map.of("message", "Password reset successfully."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
     }
 }
