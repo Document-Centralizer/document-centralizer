@@ -217,7 +217,7 @@ const MyDocuments = () => {
         const matchesSearch = docName.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === 'All' || 
                               (statusFilter === 'Pending' && doc.status === 'PENDING') || 
-                              (statusFilter === 'Approved' && doc.status === 'VERIFIED') || 
+                              (statusFilter === 'Verified' && doc.status === 'VERIFIED') || 
                               (statusFilter === 'Rejected' && doc.status === 'REJECTED');
         const matchesCategory = categoryFilter === 'All' || docType === categoryFilter;
         return matchesSearch && matchesStatus && matchesCategory;
@@ -243,6 +243,23 @@ const MyDocuments = () => {
                 <StatsCard title="Pending Documents" count={pendingCount} icon={Clock3} color="text-yellow-600" bg="bg-yellow-100" />
                 <StatsCard title="Approved Documents" count={approvedCount} icon={CheckCircle} color="text-green-600" bg="bg-green-100" />
                 <StatsCard title="Rejected Documents" count={rejectedCount} icon={XCircle} color="text-red-600" bg="bg-red-100" />
+            </div>
+
+            {/* Status Tabs */}
+            <div className="flex border-b border-slate-200 overflow-x-auto hide-scrollbar mb-2">
+                {['All', 'Pending', 'Verified', 'Rejected'].map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setStatusFilter(tab)}
+                        className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                            statusFilter === tab 
+                                ? 'border-slate-900 text-slate-900' 
+                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                        }`}
+                    >
+                        {tab} Documents
+                    </button>
+                ))}
             </div>
 
             {/* Main Content Layout */}
@@ -277,16 +294,6 @@ const MyDocuments = () => {
                                     <option value="Driving License">Driving License</option>
                                     <option value="10th Marksheet">10th Marksheet</option>
                                     <option value="Degree Certificate">Degree Certificate</option>
-                                </select>
-                                <select 
-                                    value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-4 py-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-900 text-sm bg-white cursor-pointer hidden md:block"
-                                >
-                                    <option value="All">All Statuses</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Approved">Approved</option>
-                                    <option value="Rejected">Rejected</option>
                                 </select>
                             </div>
                             

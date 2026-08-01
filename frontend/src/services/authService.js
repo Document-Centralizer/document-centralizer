@@ -19,7 +19,7 @@ export const loginUser = async (credentials) => {
       id: user.id,
       name: `${user.firstName} ${user.lastName}`.trim(),
       email: user.email,
-      role: user.role ? user.role.toLowerCase() : 'user',
+      role: user.role ? user.role.toLowerCase().replace('_', '') : 'user',
       token: token
     };
 
