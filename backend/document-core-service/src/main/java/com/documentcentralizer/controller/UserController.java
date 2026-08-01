@@ -3,6 +3,7 @@ package com.documentcentralizer.controller;
 import com.documentcentralizer.dto.UserProfileDTO;
 import com.documentcentralizer.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /*
@@ -28,9 +29,10 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserProfileDTO> getUserProfile(@RequestParam String email) {
-        // Temporarily accepting email as a parameter for testing purposes (since JWT is not implemented)
-        UserProfileDTO profile = userService.getUserProfile(email);
+    public ResponseEntity<UserProfileDTO> getUserProfile(Authentication authentication) {
+        // Extract the user ID from the JWT token (set in SecurityContext by JwtFilter)
+        Long userId = Long.parseLong(authentication.getName());
+        UserProfileDTO profile = userService.getUserProfile(userId);
         return ResponseEntity.ok(profile);
     }
 
@@ -41,9 +43,10 @@ public class UserController {
 
     @PutMapping("/profile")
     public ResponseEntity<UserProfileDTO> updateProfile(
-            @RequestParam String email, 
+            Authentication authentication, 
             @RequestBody com.documentcentralizer.dto.UpdateProfileRequestDTO updateDto) {
-        UserProfileDTO updatedProfile = userService.updateAccountSettings(email, updateDto);
+        Long userId = Long.parseLong(authentication.getName());
+        UserProfileDTO updatedProfile = userService.updateAccountSettings(userId, updateDto);
         return ResponseEntity.ok(updatedProfile);
     }
 }
