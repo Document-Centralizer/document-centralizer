@@ -39,4 +39,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     // Check if a document with the same stored file name already exists
     boolean existsByStoredFileName(String storedFileName);
+
+    // Count documents by verification status
+    long countByVerificationStatus(String verificationStatus);
 }
