@@ -2,30 +2,37 @@ import api from './api';
 import { setToken, setUserData, removeToken, removeUserData } from '../utils/localStorage';
 
 export const loginUser = async (credentials) => {
-  // Hardcoded credentials for testing (remove when real auth is ready)
-  let role = 'user';
-  let name = 'Test User';
+  try {
+    // 1. Call the real backend login API
+    const response = await api.post('/auth/login', credentials);
+    const { token } = response.data;
 
-  if (credentials.email === 'superadmin@test.com' && credentials.password === 'superadmin123') {
-    role = 'superadmin';
-    name = 'Super Admin';
-  } else if (credentials.email === 'admin@test.com' && credentials.password === 'admin123') {
-    role = 'admin';
-    name = 'Admin User';
+    // 2. Temporarily save the token so the next request is authorized
+    setToken(token);
+
+    // 3. Fetch the logged-in user's actual profile details
+    const profileResponse = await api.get('/users/profile');
+    const user = profileResponse.data;
+
+    // 4. Construct the user object for the frontend
+    const loggedInUser = {
+      id: user.id,
+      name: `${user.firstName} ${user.lastName}`.trim(),
+      email: user.email,
+      role: user.role ? user.role.toLowerCase() : 'user',
+      token: token
+    };
+
+    // 5. Save everything to local storage
+    setUserData(loggedInUser);
+    
+    return loggedInUser;
+  } catch (error) {
+    // Clean up if something fails
+    removeToken();
+    removeUserData();
+    throw error;
   }
-
-  const dummyUser = {
-    id: 1,
-    name,
-    email: credentials.email,
-    role,
-    token: 'dummy-jwt-token-123'
-  };
-  
-  setToken(dummyUser.token);
-  setUserData(dummyUser);
-  
-  return dummyUser;
 };
 
 export const logoutUser = () => {
