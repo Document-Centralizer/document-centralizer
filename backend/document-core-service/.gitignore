@@ -41,3 +41,6 @@ build/
 
 # Maven build
 target/
+
+# Environment Variables
+.env
