@@ -1,5 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Eye, X, Send } from "lucide-react";
+import api from "../../../services/api";
+
+const DocumentViewer = ({ docId }) => {
+    const [docUrl, setDocUrl] = useState(null);
+
+    useEffect(() => {
+        if (docId) {
+            api.get(`/documents/${docId}/download`, { responseType: 'blob' })
+                .then(res => {
+                    const url = URL.createObjectURL(res.data);
+                    setDocUrl(url);
+                })
+                .catch(console.error);
+        }
+        return () => {
+            if (docUrl) URL.revokeObjectURL(docUrl);
+        };
+    }, [docId]);
+
+    if (!docUrl) return <span className="text-gray-400">Loading document...</span>;
+    return <iframe src={docUrl} className="w-full h-full border-0" title="Document Viewer" />;
+};
 
 export default function DocumentsTable({ filter, documents, onReject, onForward }) {
     const [viewDoc, setViewDoc] = useState(null);
@@ -81,22 +103,40 @@ export default function DocumentsTable({ filter, documents, onReject, onForward 
             {/* View Modal */}
             {viewDoc && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">Document Details</h3>
-                        <div className="space-y-3 mb-6 text-sm text-gray-600">
-                            <p><strong className="text-gray-800">Name:</strong> {viewDoc.name}</p>
-                            <p><strong className="text-gray-800">Category:</strong> {viewDoc.category}</p>
-                            <p><strong className="text-gray-800">Owner:</strong> {viewDoc.owner}</p>
-                            <p><strong className="text-gray-800">Date:</strong> {viewDoc.date}</p>
-                            <p><strong className="text-gray-800">State:</strong> {viewDoc.state}</p>
-                            {viewDoc.rejectionReason && (
-                                <p><strong className="text-red-600">Rejection Reason:</strong> {viewDoc.rejectionReason}</p>
-                            )}
+                    <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-xl">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h3 className="text-xl font-bold text-gray-800">Document Details</h3>
+                            <button onClick={() => setViewDoc(null)} className="text-gray-500 hover:text-gray-800">
+                                <X size={24} />
+                            </button>
                         </div>
-                        <div className="flex justify-end">
+                        <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div className="space-y-2 text-sm text-gray-600 bg-gray-50 p-4 rounded-xl">
+                                    <p><strong className="text-gray-800">Name:</strong> {viewDoc.name}</p>
+                                    <p><strong className="text-gray-800">Category:</strong> {viewDoc.category}</p>
+                                    <p><strong className="text-gray-800">Owner:</strong> {viewDoc.owner}</p>
+                                    <p><strong className="text-gray-800">Date:</strong> {viewDoc.date}</p>
+                                    <p><strong className="text-gray-800">State:</strong> {viewDoc.state}</p>
+                                    {viewDoc.rejectionReason && (
+                                        <p><strong className="text-red-600">Rejection Reason:</strong> {viewDoc.rejectionReason}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="font-semibold text-gray-800">OCR Extracted Text</h4>
+                                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm text-gray-700 h-48 overflow-y-auto whitespace-pre-wrap">
+                                        {viewDoc.ocrText ? viewDoc.ocrText : <span className="text-gray-400 italic">No OCR text extracted yet.</span>}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="h-[400px] md:h-auto border border-gray-200 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                                <DocumentViewer docId={viewDoc.id} />
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 flex justify-end">
                             <button 
                                 onClick={() => setViewDoc(null)} 
-                                className="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition"
+                                className="px-6 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition"
                             >
                                 Close
                             </button>

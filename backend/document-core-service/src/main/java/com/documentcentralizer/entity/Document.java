@@ -80,6 +80,10 @@ public class Document extends BaseEntity {
     @Schema(description = "Additional remarks for the document", example = "Please review urgently")
     private String remarks;
 
+    @Column(columnDefinition = "TEXT")
+    @Schema(description = "OCR extracted text from the document")
+    private String ocrText;
+
     @Column(nullable = false)
     @Schema(description = "Soft delete flag", example = "false")
     private Boolean isDeleted = false;
