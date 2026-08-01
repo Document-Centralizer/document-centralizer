@@ -288,4 +288,18 @@ public class DocumentServiceImpl implements DocumentService {
                         .build())
                 .toList();
     }
+    @Override
+    public com.documentcentralizer.dto.DashboardStatsDTO getDashboardStats() {
+        long totalUsers = userRepository.count();
+        long totalDocuments = documentRepository.count();
+        long pendingDocuments = documentRepository.countByVerificationStatus("PENDING");
+        long verifiedDocuments = documentRepository.countByVerificationStatus("VERIFIED");
+
+        return com.documentcentralizer.dto.DashboardStatsDTO.builder()
+                .totalUsers(totalUsers)
+                .totalDocuments(totalDocuments)
+                .pendingDocuments(pendingDocuments)
+                .verifiedDocuments(verifiedDocuments)
+                .build();
+    }
 }

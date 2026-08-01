@@ -93,4 +93,11 @@ public interface DocumentService {
      * Output: List of MyDocumentResponse DTOs.
      */
     List<MyDocumentResponse> getMyDocuments(Long userId);
+    /*
+     * Method: getDashboardStats()
+     * Purpose: Retrieves overall statistics for the dashboard.
+     * Input: None.
+     * Output: DashboardStatsDTO object.
+     */
+    com.documentcentralizer.dto.DashboardStatsDTO getDashboardStats();
 }
