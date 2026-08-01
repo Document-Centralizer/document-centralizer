@@ -10,9 +10,6 @@ import AdminLayout from '../layouts/AdminLayout';
 import UserDashboard from '../pages/user/Dashboard';
 import Upload from '../pages/user/Upload';
 import MyDocuments from '../pages/user/MyDocuments';
-import Pending from '../pages/user/Pending';
-import Approved from '../pages/user/Approved';
-import Rejected from '../pages/user/Rejected';
 import Subscription from '../pages/user/Subscription';
 import Profile from '../pages/user/Profile';
 import Settings from '../pages/user/Settings';
@@ -42,11 +39,9 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']} />}>
           <Route path="/user" element={<UserLayout />}>
             <Route index element={<UserDashboard />} />
-            <Route path="upload" element={<Upload />} />
+            {/* Main Documents Page containing all status tabs */}
             <Route path="my-documents" element={<MyDocuments />} />
-            <Route path="pending" element={<Pending />} />
-            <Route path="approved" element={<Approved />} />
-            <Route path="rejected" element={<Rejected />} />
+            <Route path="upload" element={<Upload />} />
             <Route path="subscription" element={<Subscription />} />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />
