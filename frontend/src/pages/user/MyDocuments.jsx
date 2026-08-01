@@ -353,8 +353,7 @@ const MyDocuments = () => {
                                                     <th className="px-6 py-4 font-medium hidden md:table-cell">Category</th>
                                                     <th className="px-6 py-4 font-medium hidden lg:table-cell">File Size</th>
                                                     <th className="px-6 py-4 font-medium">Upload Date</th>
-                                                    <th className="px-6 py-4 font-medium">Status</th>
-                                                    <th className="px-6 py-4 font-medium text-right">Actions</th>
+                                                    <th className="px-6 py-4 font-medium text-right">Actions & Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
@@ -378,8 +377,9 @@ const MyDocuments = () => {
                                                         <td className="px-6 py-4 text-slate-500 hidden md:table-cell">{doc.documentType || doc.category}</td>
                                                         <td className="px-6 py-4 text-slate-500 hidden lg:table-cell">{doc.size || 'N/A'}</td>
                                                         <td className="px-6 py-4 text-slate-500">{new Date(doc.uploadedAt || doc.uploadDate).toLocaleDateString()}</td>
-                                                        <td className="px-6 py-4"><Badge status={doc.status} /></td>
-                                                        <td className="px-6 py-4 text-right flex justify-end items-center gap-2">
+                                                        <td className="px-6 py-4 text-right flex justify-end items-center gap-3">
+                                                            <Badge status={doc.status} />
+                                                            <div className="w-px h-4 bg-slate-200"></div>
                                                             <button 
                                                                 onClick={() => handleDownload(doc.id, doc.fileName || doc.documentName)}
                                                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-xs font-medium transition-colors border border-blue-100"
@@ -405,7 +405,6 @@ const MyDocuments = () => {
                                                         <div className="bg-white p-2 rounded-full shadow-sm"><Eye size={20} className="text-slate-700"/></div>
                                                     </div>
                                                     <img src={doc.thumbnail} alt="thumb" className="w-full h-full object-cover opacity-50 mix-blend-multiply" />
-                                                    <div className="absolute top-3 left-3"><Badge status={doc.status}/></div>
                                                 </div>
                                                 <CardContent className="p-5 flex-1 flex flex-col justify-between">
                                                     <div>
@@ -413,7 +412,7 @@ const MyDocuments = () => {
                                                         <p className="text-xs text-slate-500 mt-1">{doc.documentType || doc.category} • {doc.size || 'N/A'}</p>
                                                     </div>
                                                     <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-                                                        <p className="text-xs text-slate-400">{new Date(doc.uploadedAt || doc.uploadDate).toLocaleDateString()}</p>
+                                                        <Badge status={doc.status} />
                                                         <div className="flex items-center gap-2">
                                                             <button 
                                                                 onClick={() => handleDownload(doc.id, doc.fileName || doc.documentName)}
