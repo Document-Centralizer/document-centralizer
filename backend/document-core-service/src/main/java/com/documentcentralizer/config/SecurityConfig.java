@@ -3,6 +3,10 @@ package com.documentcentralizer.config;
 import com.documentcentralizer.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -16,17 +20,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
 /**
  * SecurityConfig handles all the security configurations for the application.
  * It manages authentication (verifying who the user is) and authorization (verifying what the user can do).
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // Enables method-level security like @PreAuthorize
 public class SecurityConfig {
 
     private final UserDetailsService customUserDetailsService;
     
-    // Injecting the JwtFilter created in Task 41
+    // Injecting the custom JwtFilter
     private final JwtFilter jwtFilter;
 
     /**
@@ -71,13 +78,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
         
-        // 1. Disable CSRF (Cross-Site Request Forgery)
-        // Why? Because we are using JWT (tokens) instead of session cookies.
-        // CSRF attacks target sessions, so CSRF protection is unnecessary and disabled for stateless APIs.
+        // 1. Enable CORS using our custom configuration source
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        // 2. Disable CSRF (Cross-Site Request Forgery) for stateless APIs
         http.csrf(csrf -> csrf.disable());
 
-        // 2. Configure HTTP Requests (Authorization)
-        // We define which URLs require a token and which are public.
+        // 3. Configure HTTP Requests Authorization
         http.authorizeHttpRequests(auth -> auth
                 // Allow public access to authentication endpoints (login, register)
                 .requestMatchers("/api/auth/**").permitAll()
@@ -95,25 +102,42 @@ public class SecurityConfig {
         );
 
         // 3. Configure Stateless Session Management
-        // Why? We want our microservices to be stateless. 
-        // Instead of the server remembering the user via an HTTP session in server memory,
-        // the client will send a JWT token with every request to prove who they are.
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // 4. Register the Authentication Provider
         // We tell HttpSecurity to use our configured DaoAuthenticationProvider
         http.authenticationProvider(authenticationProvider);
 
-        // 5. Register JWT Filter
-        // Why add it before UsernamePasswordAuthenticationFilter?
-        // UsernamePasswordAuthenticationFilter is Spring's default filter for form login.
-        // We want to intercept the request and check for our JWT token FIRST.
-        // If the token is valid, we manually set the user as logged in, bypassing the need for form login.
-        
-        // Adding the JwtFilter created in Task 41 into the filter chain
+        // 5. Register JWT Filter before UsernamePasswordAuthenticationFilter
+        // Adding the JwtFilter into the filter chain
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         // Build and return the configured security chain
         return http.build();
+    }
+
+    /**
+     * Configures CORS (Cross-Origin Resource Sharing).
+     * This tells the browser that it is safe for our frontend (e.g., localhost:5173 or localhost:3000)
+     * to make requests to this backend, and specifically allows the Authorization header.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Allow your frontend domain(s)
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        
+        // Allow all standard HTTP methods
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        // Allow important headers, especially Authorization for our JWT
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        
+        // Apply this configuration to all endpoints
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        
+        return source;
     }
 }
