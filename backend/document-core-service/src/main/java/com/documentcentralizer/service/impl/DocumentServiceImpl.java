@@ -288,4 +288,27 @@ public class DocumentServiceImpl implements DocumentService {
                         .build())
                 .toList();
     }
+
+    @Override
+    public org.springframework.core.io.Resource downloadDocumentAsResource(Long id) {
+        try {
+            // Find the document record in the database
+            Document document = getDocumentEntityById(id);
+
+            // Get the physical file path where it was stored
+            Path filePath = Paths.get(document.getFilePath());
+
+            // Convert physical file into a Spring Resource object
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+
+            // Check if the file actually exists and is readable
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            } else {
+                throw new RuntimeException("File not found or cannot be read!");
+            }
+        } catch (java.net.MalformedURLException e) {
+            throw new RuntimeException("Error while reading file: " + e.getMessage());
+        }
+    }
 }
