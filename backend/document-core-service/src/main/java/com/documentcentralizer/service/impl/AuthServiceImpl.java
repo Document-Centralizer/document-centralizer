@@ -119,13 +119,34 @@ public class AuthServiceImpl implements AuthService {
 		log.info("Password successfully reset for user: {}", user.getEmail());
 	}
 
+	private final com.documentcentralizer.repository.BlacklistedTokenRepository blacklistedTokenRepository;
+	private final com.documentcentralizer.security.JwtUtil jwtUtil;
+
+	@Override
+	public void logout(String token) {
+		if (token != null && token.startsWith("Bearer ")) {
+			token = token.substring(7);
+		}
+		java.util.Date expiration = jwtUtil.extractExpiration(token);
+		com.documentcentralizer.entity.BlacklistedToken blacklistedToken = com.documentcentralizer.entity.BlacklistedToken.builder()
+				.token(token)
+				.expiryDate(expiration)
+				.build();
+		blacklistedTokenRepository.save(blacklistedToken);
+		log.info("Token successfully blacklisted for logout.");
+	}
+
 	public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, ModelMapper modelMapper,
-						   PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService) {
+						   PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService,
+						   com.documentcentralizer.repository.BlacklistedTokenRepository blacklistedTokenRepository,
+						   com.documentcentralizer.security.JwtUtil jwtUtil) {
 	    this.userRepository = userRepository;
 	    this.passwordEncoder = passwordEncoder;
 	    this.modelMapper = modelMapper;
 	    this.passwordResetTokenRepository = passwordResetTokenRepository;
 	    this.emailService = emailService;
+		this.blacklistedTokenRepository = blacklistedTokenRepository;
+		this.jwtUtil = jwtUtil;
 	}
 
 }

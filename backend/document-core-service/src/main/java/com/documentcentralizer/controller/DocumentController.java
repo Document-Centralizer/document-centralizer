@@ -38,6 +38,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/documents")
 @Tag(name = "Document APIs", description = "Endpoints for document management operations like upload, view, update, and search.")
+@SecurityRequirement(name = "bearerAuth")
 public class DocumentController {
 
     private final DocumentService documentService;
@@ -47,26 +48,19 @@ public class DocumentController {
      * Method : uploadDocument()
      * Purpose: Upload a document, validate the request, and store its metadata.
      */
-    @Operation(
-            summary = "Upload Document",
-            description = "Uploads a document along with its metadata."
-//            security = @SecurityRequirement(name = "bearerAuth")
-    )
-
-    @PostMapping(
-            value = "/upload",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ApiResponse<DocumentResponseDTO>> uploadDocument( @Parameter( description = "Document file to upload", required = true )
-            @RequestParam("file") MultipartFile file, @Parameter( description = "Document metadata" )
-            @Valid
-            @ModelAttribute DocumentUploadRequestDTO requestDTO,
-            @Parameter(
-                    description = "User ID of the uploader",
-                    required = true
-            )
+    @PostMapping(value = "/upload", consumes = {"multipart/form-data"})
+    public ResponseEntity<ApiResponse<DocumentResponseDTO>> uploadDocument(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam("documentName") String documentName,
+            @RequestParam("documentType") String documentType,
+            @RequestParam(value = "remarks", required = false) String remarks,
             @RequestParam("userId") Long userId) {
+            
+            DocumentUploadRequestDTO requestDTO = new DocumentUploadRequestDTO();
+            requestDTO.setDocumentName(documentName);
+            requestDTO.setDocumentType(documentType);
+            requestDTO.setRemarks(remarks);
+
     		DocumentResponseDTO response =
                 documentService.saveDocument(file, requestDTO, userId);
 

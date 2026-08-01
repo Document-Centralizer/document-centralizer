@@ -18,6 +18,9 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private com.documentcentralizer.repository.BlacklistedTokenRepository blacklistedTokenRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -28,6 +31,14 @@ public class JwtFilter extends OncePerRequestFilter {
         // 2. Check for Bearer token
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7); // Remove "Bearer "
+
+            // Check if token is blacklisted
+            if (blacklistedTokenRepository.existsByToken(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token has been blacklisted. Please log in again.");
+                return;
+            }
+
             Authentication auth = jwtUtil.validateToken(token); // 3. Validate token
             
             if (auth != null) {

@@ -12,4 +12,6 @@ public interface AuthService {
     void processForgotPassword(com.documentcentralizer.dto.ForgotPasswordRequest request);
 
     void processResetPassword(com.documentcentralizer.dto.ResetPasswordRequest request);
+
+    void logout(String token);
 }
