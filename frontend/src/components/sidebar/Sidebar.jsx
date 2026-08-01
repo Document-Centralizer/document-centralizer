@@ -19,16 +19,12 @@ const Sidebar = () => {
                 {
                     title: "MAIN",
                     menus: [
+                        // Dashboard for overall metrics
                         { name: "Dashboard", path: "/superadmin", icon: LayoutDashboard },
+                        // Main queue for pending verifications
                         { name: "Verification Queue", path: "/superadmin/queue", icon: Inbox },
-                    ],
-                },
-                {
-                    title: "DOCUMENT MANAGEMENT",
-                    menus: [
-                        { name: "Approved", path: "/superadmin/approved", icon: CheckCircle },
-                        { name: "Rejected", path: "/superadmin/rejected", icon: XCircle },
-                        { name: "History", path: "/superadmin/history", icon: History },
+                        // Single clean link to view all processed documents
+                        { name: "All Documents", path: "/superadmin/history", icon: History },
                     ],
                 },
                 {
@@ -46,17 +42,12 @@ const Sidebar = () => {
                 {
                     title: "MAIN",
                     menus: [
+                        // Dashboard for admin metrics
                         { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
+                        // Manage user accounts
                         { name: "Users", path: "/admin/users", icon: Users },
-                        { name: "Documents", path: "/admin/documents", icon: Database },
-                    ],
-                },
-                {
-                    title: "DOCUMENT MANAGEMENT",
-                    menus: [
-                        { name: "Pending Review", path: "/admin/pending", icon: Clock3 },
-                        { name: "Approved", path: "/admin/approved", icon: CheckCircle },
-                        { name: "Rejected", path: "/admin/rejected", icon: XCircle },
+                        // Single clean link for all document statuses
+                        { name: "All Documents", path: "/admin/documents", icon: Database },
                     ],
                 },
                 {
@@ -77,12 +68,16 @@ const Sidebar = () => {
             ];
         }
 
+        // Default return for standard users
         return [
             {
                 title: "MAIN",
                 menus: [
+                    // User's main dashboard
                     { name: "Dashboard", path: "/user", icon: LayoutDashboard },
+                    // Single clean link to manage all their documents (pending, verified, etc.)
                     { name: "My Documents", path: "/user/my-documents", icon: FileText },
+                    // Quick link to upload a new document
                     { name: "Upload Document", path: "/user/upload", icon: Upload },
                 ],
             },

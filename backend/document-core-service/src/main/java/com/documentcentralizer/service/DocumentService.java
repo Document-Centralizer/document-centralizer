@@ -100,4 +100,12 @@ public interface DocumentService {
      * Output: DashboardStatsDTO object.
      */
     com.documentcentralizer.dto.DashboardStatsDTO getDashboardStats();
+
+    /*
+     * Method: downloadDocumentAsResource()
+     * Purpose: Loads the physical document file from storage to be downloaded.
+     * Input: Document ID.
+     * Output: The physical file as a Spring Resource.
+     */
+    org.springframework.core.io.Resource downloadDocumentAsResource(Long id);
 }
