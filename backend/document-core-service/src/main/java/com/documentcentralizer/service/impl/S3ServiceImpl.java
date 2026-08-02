@@ -30,7 +30,10 @@ import java.util.UUID;
  * Author:
  * CDAC Project
  */
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class S3ServiceImpl implements S3Service {
 
     private final S3Client s3Client;
@@ -38,9 +41,6 @@ public class S3ServiceImpl implements S3Service {
     @Value("${aws.s3.bucket}")
     private String bucketName;
 
-    public S3ServiceImpl(S3Client s3Client) {
-        this.s3Client = s3Client;
-    }
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -84,6 +84,7 @@ public class S3ServiceImpl implements S3Service {
             String folderPrefix = getFolderPrefix(file.getContentType());
             String objectKey = folderPrefix + uniqueFileName;
 
+
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
                     .key(objectKey)
@@ -103,6 +104,7 @@ public class S3ServiceImpl implements S3Service {
     @Override
     public Resource downloadFile(String objectKey) {
         try {
+
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(objectKey)

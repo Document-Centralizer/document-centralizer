@@ -19,17 +19,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
  * Responsibility:
  * - Handle administrative tasks like document approval and rejection
  */
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ADMIN')") // Double security check ensuring only ADMIN can access these methods
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')") // Allow both Admin and SuperAdmin
+@RequiredArgsConstructor
 public class AdminController {
 
     private final DocumentService documentService;
 
-    @Autowired
-    public AdminController(DocumentService documentService) {
-        this.documentService = documentService;
-    }
 
     @GetMapping("/documents/pending")
     public ResponseEntity<List<DocumentResponseDTO>> getPendingDocuments() {

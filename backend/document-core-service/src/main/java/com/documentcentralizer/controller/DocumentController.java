@@ -217,4 +217,21 @@ public class DocumentController {
         
         return ResponseEntity.ok(myDocuments);
     }
+
+    /**
+     * Public endpoint to access a verified document using its share slug.
+     */
+    @Operation(summary = "Access Shared Document", description = "Publicly access a verified document using its share slug.")
+    @GetMapping("/share/{slug}")
+    public ResponseEntity<org.springframework.core.io.Resource> accessSharedDocument(@PathVariable String slug) {
+        org.springframework.core.io.Resource resource = documentService.getDocumentByShareSlug(slug);
+        DocumentResponseDTO metadata = documentService.getDocumentMetadataByShareSlug(slug);
+        
+        String headerValue = "inline; filename=\"" + metadata.getOriginalFileName() + "\"";
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(metadata.getContentType() != null ? metadata.getContentType() : "application/octet-stream"))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, headerValue)
+                .body(resource);
+    }
 }

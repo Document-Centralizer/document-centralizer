@@ -1,17 +1,8 @@
 package com.documentcentralizer.client;
 
 /**
- * Purpose:
  * Represents the response payload from the OCR service.
- * 
- * Responsibility:
  * Holds the extracted text and confidence scores.
- * 
- * Usage:
- * Returned by OcrClient after successful processing.
- * 
- * Author:
- * CDAC Project
  */
 public class OcrResponse {
     private String extractedText;

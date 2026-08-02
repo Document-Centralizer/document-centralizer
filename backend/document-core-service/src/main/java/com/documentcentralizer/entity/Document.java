@@ -14,18 +14,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/*
- * Class Name : Document
- *
- * Purpose:
- * This class represents the Document entity which maps to the "documents" table in the database.
- *
- * Responsibility:
- * - Hold document related information like file name, path, status, etc.
- * - Establish relationship with the User entity.
- *
- * Author:
- * CDAC Project
+/**
+ * Represents the Document entity, mapping to the "documents" table.
+ * Holds file metadata, status, and establishes a relationship with User.
  */
 @Entity
 @Table(name = "documents")

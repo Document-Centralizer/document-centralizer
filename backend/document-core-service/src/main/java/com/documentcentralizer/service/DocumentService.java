@@ -116,4 +116,14 @@ public interface DocumentService {
      * Output: The physical file as a Spring Resource.
      */
     org.springframework.core.io.Resource downloadDocumentAsResource(Long id);
+
+    /**
+     * Gets a document's metadata by its share slug.
+     */
+    DocumentResponseDTO getDocumentMetadataByShareSlug(String shareSlug);
+
+    /**
+     * Downloads a document file by its share slug.
+     */
+    org.springframework.core.io.Resource getDocumentByShareSlug(String shareSlug);
 }

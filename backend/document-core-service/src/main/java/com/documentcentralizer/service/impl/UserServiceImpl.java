@@ -8,16 +8,15 @@ import com.documentcentralizer.entity.User;
 import com.documentcentralizer.repository.UserRepository;
 import com.documentcentralizer.service.UserService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
-    public UserServiceImpl(UserRepository userRepository, ModelMapper modelMapper) {
-        this.userRepository = userRepository;
-        this.modelMapper = modelMapper;
-    }
 
     @Override
     public UserProfileDTO getUserProfile(Long userId) {
