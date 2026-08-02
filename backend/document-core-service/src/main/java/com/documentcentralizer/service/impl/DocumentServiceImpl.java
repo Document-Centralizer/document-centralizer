@@ -1,3 +1,4 @@
+
 package com.documentcentralizer.service.impl;
 
 import com.documentcentralizer.dto.DocumentResponseDTO;
@@ -9,6 +10,9 @@ import com.documentcentralizer.entity.User;
 import com.documentcentralizer.repository.DocumentRepository;
 import com.documentcentralizer.repository.UserRepository;
 import com.documentcentralizer.service.DocumentService;
+import com.documentcentralizer.client.OcrClient;
+import com.documentcentralizer.client.OcrRequest;
+import com.documentcentralizer.client.OcrResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,14 +43,16 @@ public class DocumentServiceImpl implements DocumentService {
     private final ModelMapper modelMapper;
     private final com.documentcentralizer.service.AuthBridgeService authBridgeService;
     private final com.documentcentralizer.service.S3Service s3Service;
+    private final OcrClient ocrClient;
 
     // Constructor Injection
-    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository, ModelMapper modelMapper, com.documentcentralizer.service.AuthBridgeService authBridgeService, com.documentcentralizer.service.S3Service s3Service) {
+    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository, ModelMapper modelMapper, com.documentcentralizer.service.AuthBridgeService authBridgeService, com.documentcentralizer.service.S3Service s3Service, OcrClient ocrClient) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.authBridgeService = authBridgeService;
         this.s3Service = s3Service;
+        this.ocrClient = ocrClient;
     }
 
     private DocumentResponseDTO convertToDTO(Document document) {
@@ -107,6 +113,21 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Save metadata into database
         Document savedDocument = documentRepository.save(document);
+        
+        // 5a. Call OCR Service synchronously and save text
+        try {
+            OcrRequest ocrRequest = new OcrRequest();
+            ocrRequest.setDocumentId(savedDocument.getId().toString());
+            ocrRequest.setFileUrl(objectKey);
+            
+            OcrResponse ocrResponse = ocrClient.processDocument(ocrRequest);
+            if (ocrResponse != null && ocrResponse.getExtractedText() != null) {
+                savedDocument.setOcrText(ocrResponse.getExtractedText());
+                savedDocument = documentRepository.save(savedDocument);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to process OCR during document upload: " + e.getMessage());
+        }
         
         // 6. Return successful response
         return convertToDTO(savedDocument);
