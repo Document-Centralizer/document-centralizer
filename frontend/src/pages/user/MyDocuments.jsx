@@ -228,7 +228,7 @@ const MyDocuments = () => {
 
     // Derived stats
     const totalCount = documents.length;
-    const pendingCount = documents.filter(d => d.status === 'PENDING').length;
+    const pendingCount = documents.filter(d => d.status === 'PENDING_ADMIN').length;
     const approvedCount = documents.filter(d => d.status === 'VERIFIED').length;
     const rejectedCount = documents.filter(d => d.status === 'REJECTED').length;
 
@@ -238,7 +238,7 @@ const MyDocuments = () => {
         const docType = doc.documentType || doc.category || '';
         const matchesSearch = docName.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === 'All' || 
-                              (statusFilter === 'Pending' && doc.status === 'PENDING') || 
+                              (statusFilter === 'Pending' && doc.status === 'PENDING_ADMIN') || 
                               (statusFilter === 'Verified' && doc.status === 'VERIFIED') || 
                               (statusFilter === 'Rejected' && doc.status === 'REJECTED');
         const matchesCategory = categoryFilter === 'All' || docType === categoryFilter;

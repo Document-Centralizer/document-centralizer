@@ -60,7 +60,7 @@ public class Document extends BaseEntity {
     private LocalDateTime uploadedAt;
 
     @Column(nullable = false, length = 50)
-    @Schema(description = "Verification status of the document", example = "PENDING")
+    @Schema(description = "Verification status of the document", example = "PENDING_ADMIN")
     private String verificationStatus; // Example: PENDING, VERIFIED, REJECTED
 
     @Column(length = 255)

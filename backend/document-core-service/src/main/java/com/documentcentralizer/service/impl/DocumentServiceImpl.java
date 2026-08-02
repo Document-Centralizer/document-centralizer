@@ -72,7 +72,7 @@ public class DocumentServiceImpl implements DocumentService {
         document.setContentType(file.getContentType());
         
         // Set default values for new document
-        document.setVerificationStatus("PENDING");
+        document.setVerificationStatus("PENDING_ADMIN");
         document.setIsDeleted(false);
 
         // Save metadata into database
@@ -249,7 +249,7 @@ public class DocumentServiceImpl implements DocumentService {
     public com.documentcentralizer.dto.DashboardStatsDTO getDashboardStats() {
         long totalUsers = userRepository.count();
         long totalDocuments = documentRepository.count();
-        long pendingDocuments = documentRepository.countByVerificationStatus("PENDING");
+        long pendingDocuments = documentRepository.countByVerificationStatus("PENDING_ADMIN");
         long verifiedDocuments = documentRepository.countByVerificationStatus("VERIFIED");
 
         return com.documentcentralizer.dto.DashboardStatsDTO.builder()

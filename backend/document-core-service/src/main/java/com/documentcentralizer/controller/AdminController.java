@@ -32,14 +32,8 @@ public class AdminController {
 
     @GetMapping("/documents/pending")
     public ResponseEntity<List<DocumentResponseDTO>> getPendingDocuments() {
-        List<DocumentResponseDTO> pendingDocuments = documentService.getDocumentsByStatus("PENDING");
+        List<DocumentResponseDTO> pendingDocuments = documentService.getDocumentsByStatus("PENDING_ADMIN");
         return ResponseEntity.ok(pendingDocuments);
-    }
-
-    @PutMapping("/documents/{id}/approve")
-    public ResponseEntity<DocumentResponseDTO> approveDocument(@PathVariable Long id) {
-        DocumentResponseDTO approvedDocument = documentService.changeVerificationStatus(id, "VERIFIED", null);
-        return ResponseEntity.ok(approvedDocument);
     }
 
     @PutMapping("/documents/{id}/reject")
