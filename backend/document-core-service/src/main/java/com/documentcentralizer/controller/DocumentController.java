@@ -208,12 +208,10 @@ public class DocumentController {
      */
     @Operation(summary = "Get My Documents", description = "Retrieves all documents uploaded by the currently logged-in user.", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping("/my")
-    public ResponseEntity<List<MyDocumentResponse>> getMyDocuments(
-            @Parameter(description = "User ID (Temporary Header)") @RequestHeader("X-USER-ID") Long userId) {
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+    public ResponseEntity<List<MyDocumentResponse>> getMyDocuments(org.springframework.security.core.Authentication authentication) {
+        
+        // Extract the logged-in user's ID from the JWT token
+        Long userId = Long.parseLong(authentication.getName());
 
         List<MyDocumentResponse> myDocuments = documentService.getMyDocuments(userId);
         
