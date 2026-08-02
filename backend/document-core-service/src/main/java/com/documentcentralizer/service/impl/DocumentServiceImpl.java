@@ -46,16 +46,18 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
+    private final com.documentcentralizer.service.AuthBridgeService authBridgeService;
 
     // Configurable local directory to store uploaded files
     @Value("${file.upload-dir:uploads/}")
     private String uploadDir;
 
     // Constructor Injection
-    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository, ModelMapper modelMapper) {
+    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository, ModelMapper modelMapper, com.documentcentralizer.service.AuthBridgeService authBridgeService) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
+        this.authBridgeService = authBridgeService;
     }
 
     /*
@@ -252,7 +254,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public DocumentResponseDTO changeVerificationStatus(Long id, String status, String rejectionReason) {
+    public DocumentResponseDTO changeVerificationStatus(Long id, String status, String reasonOrRemarks) {
         // Find existing document
         Document document = getDocumentEntityById(id);
 
@@ -261,12 +263,38 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Set rejection reason if status is REJECTED
         if ("REJECTED".equalsIgnoreCase(status)) {
-            document.setRejectionReason(rejectionReason);
+            document.setRejectionReason(reasonOrRemarks);
         } else {
             document.setRejectionReason(null);
         }
+        
+        // Set remarks if status is FORWARDED_TO_SUPERADMIN
+        if ("FORWARDED_TO_SUPERADMIN".equalsIgnoreCase(status)) {
+            document.setRemarks(reasonOrRemarks);
+        }
 
         // Save updated document in database
+        Document updatedDocument = documentRepository.save(document);
+        return convertToDTO(updatedDocument);
+    }
+
+    @Override
+    public DocumentResponseDTO verifyGovernmentDocument(Long id) {
+        Document document = getDocumentEntityById(id);
+        
+        // Call Mock AuthBridge API
+        boolean isSuccess = authBridgeService.verifyWithAuthBridge(document.getOcrText());
+        
+        if (isSuccess) {
+            document.setVerificationStatus("VERIFIED");
+            document.setRejectionReason(null);
+            document.setRemarks("Auto-verified successfully via AuthBridge.");
+        } else {
+            document.setVerificationStatus("REJECTED");
+            document.setRejectionReason("AuthBridge verification failed. Invalid document or poor OCR quality.");
+            document.setRemarks("Auto-rejected via AuthBridge.");
+        }
+        
         Document updatedDocument = documentRepository.save(document);
         return convertToDTO(updatedDocument);
     }

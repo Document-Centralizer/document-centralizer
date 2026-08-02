@@ -39,12 +39,25 @@ export default function DocumentsSection() {
         }
     };
 
-    const handleForward = async (id) => {
+    const handleForward = async (id, remarks) => {
         try {
-            await api.put(`/admin/documents/${id}/forward`);
+            let url = `/admin/documents/${id}/forward`;
+            if (remarks) {
+                url += `?remarks=${encodeURIComponent(remarks)}`;
+            }
+            await api.put(url);
             fetchDocuments();
         } catch (error) {
             console.error("Failed to forward document:", error);
+        }
+    };
+
+    const handleAuthBridgeVerify = async (id) => {
+        try {
+            await api.put(`/admin/documents/${id}/verify-authbridge`);
+            fetchDocuments();
+        } catch (error) {
+            console.error("Failed to verify document via AuthBridge:", error);
         }
     };
 
@@ -81,6 +94,7 @@ export default function DocumentsSection() {
                 documents={documents}
                 onReject={handleReject}
                 onForward={handleForward}
+                onAuthBridgeVerify={handleAuthBridgeVerify}
             />
         </div>
     );
