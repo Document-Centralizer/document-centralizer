@@ -87,6 +87,14 @@ public interface DocumentService {
     DocumentResponseDTO changeVerificationStatus(Long id, String status, String rejectionReason);
 
     /*
+     * Method: verifyGovernmentDocument()
+     * Purpose: Verifies a government document.
+     * Input: Document ID.
+     * Output: Updated DocumentResponseDTO object.
+     */
+    DocumentResponseDTO verifyGovernmentDocument(Long id);
+
+    /*
      * Method: getMyDocuments()
      * Purpose: Retrieves all documents uploaded by the currently logged-in user, sorted by newest first.
      * Input: User ID.

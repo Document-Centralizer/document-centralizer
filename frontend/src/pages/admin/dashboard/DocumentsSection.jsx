@@ -52,6 +52,15 @@ export default function DocumentsSection() {
         }
     };
 
+    const handleAuthBridgeVerify = async (id) => {
+        try {
+            await api.put(`/admin/documents/${id}/verify-authbridge`);
+            fetchDocuments();
+        } catch (error) {
+            console.error("Failed to verify document via AuthBridge:", error);
+        }
+    };
+
     return (
         <div className="animate-in fade-in duration-300">
             <div className="flex justify-between items-center mb-6">
@@ -85,6 +94,7 @@ export default function DocumentsSection() {
                 documents={documents}
                 onReject={handleReject}
                 onForward={handleForward}
+                onAuthBridgeVerify={handleAuthBridgeVerify}
             />
         </div>
     );
