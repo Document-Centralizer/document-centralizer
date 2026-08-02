@@ -52,8 +52,10 @@ public class AdminController {
     }
 
     @PutMapping("/documents/{id}/forward")
-    public ResponseEntity<DocumentResponseDTO> forwardDocument(@PathVariable Long id) {
-        DocumentResponseDTO forwardedDocument = documentService.changeVerificationStatus(id, "FORWARDED_TO_SUPERADMIN", null);
+    public ResponseEntity<DocumentResponseDTO> forwardDocument(
+            @PathVariable Long id,
+            @RequestParam(required = false) String remarks) {
+        DocumentResponseDTO forwardedDocument = documentService.changeVerificationStatus(id, "FORWARDED_TO_SUPERADMIN", remarks);
         return ResponseEntity.ok(forwardedDocument);
     }
 

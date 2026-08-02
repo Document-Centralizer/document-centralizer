@@ -27,6 +27,8 @@ export default function DocumentsTable({ filter, documents, onReject, onForward 
     const [viewDoc, setViewDoc] = useState(null);
     const [rejectDoc, setRejectDoc] = useState(null);
     const [rejectReason, setRejectReason] = useState("");
+    const [forwardDoc, setForwardDoc] = useState(null);
+    const [forwardRemark, setForwardRemark] = useState("");
 
     const filteredDocs = filter === "All" 
         ? documents 
@@ -80,7 +82,7 @@ export default function DocumentsTable({ filter, documents, onReject, onForward 
                                             <X size={18} />
                                         </button>
                                         <button 
-                                            onClick={() => onForward(doc.id)} 
+                                            onClick={() => setForwardDoc(doc)} 
                                             className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition" 
                                             title="Forward to Super Admin"
                                         >
@@ -179,6 +181,43 @@ export default function DocumentsTable({ filter, documents, onReject, onForward 
                                 className="px-4 py-2 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition disabled:opacity-50"
                             >
                                 Submit Rejection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Forward Modal */}
+            {forwardDoc && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
+                        <h3 className="text-xl font-bold text-purple-600 mb-2">Forward to Super Admin</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Please provide a remark for Super Admin regarding <strong>{forwardDoc.name}</strong>.
+                        </p>
+                        <textarea
+                            className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
+                            rows="4"
+                            placeholder="Add your remarks here..."
+                            value={forwardRemark}
+                            onChange={(e) => setForwardRemark(e.target.value)}
+                        ></textarea>
+                        <div className="flex justify-end gap-3">
+                            <button 
+                                onClick={() => { setForwardDoc(null); setForwardRemark(""); }} 
+                                className="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    onForward(forwardDoc.id, forwardRemark);
+                                    setForwardDoc(null);
+                                    setForwardRemark("");
+                                }} 
+                                className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition"
+                            >
+                                Forward
                             </button>
                         </div>
                     </div>
