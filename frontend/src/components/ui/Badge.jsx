@@ -6,6 +6,7 @@ export const Badge = ({ status }) => {
     const variants = {
         // Pending / Verification statuses
         "PENDING": "bg-yellow-100 text-yellow-700 border-yellow-200",
+        "PENDING_ADMIN": "bg-yellow-100 text-yellow-700 border-yellow-200",
         "PENDING_VERIFICATION": "bg-yellow-100 text-yellow-700 border-yellow-200",
         // Approved statuses
         "VERIFIED": "bg-green-100 text-green-700 border-green-200",

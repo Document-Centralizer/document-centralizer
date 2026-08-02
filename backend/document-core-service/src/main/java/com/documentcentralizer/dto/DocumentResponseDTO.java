@@ -37,7 +37,7 @@ public class DocumentResponseDTO {
     @Schema(description = "Timestamp when uploaded")
     private LocalDateTime uploadedAt;
 
-    @Schema(description = "Verification status", example = "PENDING")
+    @Schema(description = "Verification status", example = "PENDING_ADMIN")
     private String verificationStatus;
 
     @Schema(description = "Reason for rejection if REJECTED", example = "Unreadable")
