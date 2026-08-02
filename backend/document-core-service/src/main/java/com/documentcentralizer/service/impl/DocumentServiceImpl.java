@@ -176,14 +176,21 @@ public class DocumentServiceImpl implements DocumentService {
         document.setVerificationStatus(status);
 
         // Generate a share slug if it is verified and doesn't have one
-        if ("VERIFIED".equalsIgnoreCase(status) && document.getShareSlug() == null) {
-            document.setShareSlug(java.util.UUID.randomUUID().toString().substring(0, 8));
+        if ("VERIFIED".equalsIgnoreCase(status)) {
+            if (document.getShareSlug() == null) {
+                document.setShareSlug(java.util.UUID.randomUUID().toString().substring(0, 8));
+            }
+            // Clear any old rejection or forwarding remarks when approved
+            document.setRemarks(null);
+            document.setRejectionReason(null);
         }
 
         // Set rejection reason if status is REJECTED
         if ("REJECTED".equalsIgnoreCase(status)) {
             document.setRejectionReason(reasonOrRemarks);
-        } else {
+            document.setRemarks("Manually rejected by Admin/SuperAdmin");
+        } else if (!"VERIFIED".equalsIgnoreCase(status)) {
+            // Only clear rejection reason if not VERIFIED (since VERIFIED clears it above)
             document.setRejectionReason(null);
         }
         
