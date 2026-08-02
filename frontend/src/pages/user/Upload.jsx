@@ -109,19 +109,49 @@ const Upload = () => {
         setUploadState('confirming');
     };
 
-    const startUpload = () => {
+    const startUpload = async () => {
         setUploadState('uploading');
-        setProgress(0);
-        const interval = setInterval(() => {
-            setProgress(prev => {
-                if (prev >= 100) {
-                    clearInterval(interval);
-                    setUploadState('success');
-                    return 100;
+        setProgress(10); // Initial progress
+
+        try {
+            // Get user ID from local storage securely
+            const { getUserData } = await import('../../utils/localStorage');
+            const user = getUserData();
+            if (!user || !user.id) {
+                setErrorMsg('User not logged in or invalid session.');
+                setUploadState('idle');
+                return;
+            }
+
+            const formDataToSend = new FormData();
+            formDataToSend.append('file', file);
+            formDataToSend.append('documentName', formData.name);
+            formDataToSend.append('documentType', formData.category);
+            if (formData.description) {
+                formDataToSend.append('remarks', formData.description);
+            }
+            formDataToSend.append('userId', user.id);
+
+            // Import api inline or assume it's added to the top
+            const { default: api } = await import('../../services/api');
+            
+            await api.post('/documents/upload', formDataToSend, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+                onUploadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setProgress(percentCompleted);
                 }
-                return prev + 10;
             });
-        }, 300);
+
+            setUploadState('success');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            setErrorMsg(error.response?.data?.message || 'Failed to upload document. Please try again.');
+            setUploadState('idle');
+            setProgress(0);
+        }
     };
 
     const resetForm = () => {

@@ -13,17 +13,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
-import jakarta.annotation.PostConstruct;
 
 /*
  * Class Name : DocumentServiceImpl
@@ -47,30 +38,15 @@ public class DocumentServiceImpl implements DocumentService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final com.documentcentralizer.service.AuthBridgeService authBridgeService;
-
-    // Configurable local directory to store uploaded files
-    @Value("${file.upload-dir:uploads/}")
-    private String uploadDir;
+    private final com.documentcentralizer.service.S3Service s3Service;
 
     // Constructor Injection
-    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository, ModelMapper modelMapper, com.documentcentralizer.service.AuthBridgeService authBridgeService) {
+    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository, ModelMapper modelMapper, com.documentcentralizer.service.AuthBridgeService authBridgeService, com.documentcentralizer.service.S3Service s3Service) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.authBridgeService = authBridgeService;
-    }
-
-    /*
-     * Method: init()
-     * Purpose: Initialize the upload directory during bean creation.
-     */
-    @PostConstruct
-    public void init() {
-        // Create upload directory if it does not exist
-        File directory = new File(uploadDir);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
+        this.s3Service = s3Service;
     }
 
     private DocumentResponseDTO convertToDTO(Document document) {
@@ -103,21 +79,17 @@ public class DocumentServiceImpl implements DocumentService {
      */
     @Override
     public DocumentResponseDTO saveDocument(MultipartFile file, DocumentUploadRequestDTO requestDTO, Long userId) {
-        // 1. Validate uploaded file
-        validateFile(file);
+        // 1. Upload file to S3
+        String objectKey = s3Service.uploadFile(file);
 
         // 2. Check if user exists
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        // 3. Generate unique filename
         String originalFileName = file.getOriginalFilename();
-        String storedFileName = UUID.randomUUID().toString() + "_" + originalFileName;
+        String storedFileName = objectKey.substring(objectKey.lastIndexOf("/") + 1);
 
-        // 4. Save file locally (Storage logic separated)
-        String filePath = saveFileLocally(file, storedFileName);
-
-        // 5. Store metadata in database
+        // 3. Store metadata in database
         // Map DTO to Entity
         Document document = modelMapper.map(requestDTO, Document.class);
 
@@ -125,9 +97,9 @@ public class DocumentServiceImpl implements DocumentService {
         document.setUser(user);
         document.setOriginalFileName(originalFileName);
         document.setStoredFileName(storedFileName);
-        document.setFilePath(filePath);
+        document.setObjectKey(objectKey);
         document.setFileSize(file.getSize());
-        document.setFileFormat(file.getContentType());
+        document.setContentType(file.getContentType());
         
         // Set default values for new document
         document.setVerificationStatus("PENDING");
@@ -140,50 +112,7 @@ public class DocumentServiceImpl implements DocumentService {
         return convertToDTO(savedDocument);
     }
 
-    /*
-     * Method: validateFile()
-     * Purpose: Validates the uploaded file for empty status, blank name, type and size.
-     */
-    private void validateFile(MultipartFile file) {
-        // Check if file is empty
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File cannot be empty");
-        }
 
-        // Check if file name is blank
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null || originalFilename.trim().isEmpty()) {
-            throw new IllegalArgumentException("File name cannot be blank");
-        }
-
-        // Validate maximum file size (Maximum 10 MB)
-        if (file.getSize() > 10 * 1024 * 1024) {
-            throw new IllegalArgumentException("File size exceeds the maximum limit of 10 MB");
-        }
-
-        // Check supported file type
-        String contentType = file.getContentType();
-        if (contentType == null || !(contentType.equals("application/pdf") || 
-            contentType.equals("image/jpeg") || contentType.equals("image/jpg") || 
-            contentType.equals("image/png"))) {
-            throw new IllegalArgumentException("Unsupported file format. Allowed formats are: PDF, JPG, JPEG, PNG");
-        }
-    }
-
-    /*
-     * Method: saveFileLocally()
-     * Purpose: Saves the file to local storage. Designed to be easily replaced by cloud storage later.
-     */
-    private String saveFileLocally(MultipartFile file, String storedFileName) {
-        try {
-            Path path = Paths.get(uploadDir, storedFileName);
-            // Save file to local storage
-            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            return path.toAbsolutePath().toString();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to store file: " + e.getMessage());
-        }
-    }
 
     @Override
     public List<DocumentResponseDTO> getAllDocuments() {
@@ -227,11 +156,11 @@ public class DocumentServiceImpl implements DocumentService {
         // Find existing document
         Document document = getDocumentEntityById(id);
 
-        // Soft delete the record
-        document.setIsDeleted(true);
+        // Delete object from S3
+        s3Service.deleteFile(document.getObjectKey());
 
-        // Save the updated record
-        documentRepository.save(document);
+        // Delete database entry (hard delete as requested for S3 cleanup)
+        documentRepository.delete(document);
     }
 
     @Override
@@ -333,24 +262,14 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public org.springframework.core.io.Resource downloadDocumentAsResource(Long id) {
-        try {
-            // Find the document record in the database
-            Document document = getDocumentEntityById(id);
-
-            // Get the physical file path where it was stored
-            Path filePath = Paths.get(document.getFilePath());
-
-            // Convert physical file into a Spring Resource object
-            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
-
-            // Check if the file actually exists and is readable
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
-            } else {
-                throw new RuntimeException("File not found or cannot be read!");
-            }
-        } catch (java.net.MalformedURLException e) {
-            throw new RuntimeException("Error while reading file: " + e.getMessage());
+        // Find the document record in the database
+        Document document = getDocumentEntityById(id);
+        
+        if (document.getObjectKey() == null) {
+            throw new RuntimeException("This document was uploaded before S3 integration and is no longer available.");
         }
+        
+        // Fetch document directly from S3
+        return s3Service.downloadFile(document.getObjectKey());
     }
 }

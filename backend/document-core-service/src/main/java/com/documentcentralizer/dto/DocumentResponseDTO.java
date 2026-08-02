@@ -25,14 +25,14 @@ public class DocumentResponseDTO {
     @Schema(description = "Unique stored file name", example = "1722135043_john_doe_resume.pdf")
     private String storedFileName;
 
-    @Schema(description = "Path to the stored file", example = "/uploads/documents/1722135043_john_doe_resume.pdf")
-    private String filePath;
+    @Schema(description = "S3 object key for the file", example = "documents/pdf/1722135043_john_doe_resume.pdf")
+    private String objectKey;
 
     @Schema(description = "Size of the file in bytes", example = "1048576")
     private Long fileSize;
 
     @Schema(description = "Format of the file", example = "application/pdf")
-    private String fileFormat;
+    private String contentType;
 
     @Schema(description = "Timestamp when uploaded")
     private LocalDateTime uploadedAt;
