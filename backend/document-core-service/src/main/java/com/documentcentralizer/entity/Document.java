@@ -88,6 +88,14 @@ public class Document extends BaseEntity {
     @Schema(description = "Soft delete flag", example = "false")
     private Boolean isDeleted = false;
 
+    @Column(length = 255)
+    @Schema(description = "Admin remarks for the document", example = "Approved after review")
+    private String adminRemark;
+
+    @Column(length = 255, unique = true)
+    @Schema(description = "Unique slug for sharing the document publicly", example = "abc123xyz")
+    private String shareSlug;
+
     // Many documents belong to one user
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

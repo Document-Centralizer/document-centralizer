@@ -22,6 +22,5 @@ public class BlacklistedToken extends BaseEntity {
     private String token;
 
     @Column(nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
     private Date expiryDate;
 }
