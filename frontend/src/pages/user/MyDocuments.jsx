@@ -57,10 +57,20 @@ const ActionMenu = ({ doc, onPreview, onDownload }) => {
                             <Download size={16} className="text-slate-400"/> Download
                         </button>
                         
-                        {doc.status === 'Approved' && (
+                        {doc.status === 'VERIFIED' && (
                             <>
-                                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                                    <Share2 size={16} className="text-slate-400"/> Share Link
+                                <button 
+                                    onClick={() => {
+                                        if (doc.shareSlug) {
+                                            navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${doc.shareSlug}`);
+                                            alert("Share link copied to clipboard!");
+                                        } else {
+                                            alert("Share link not available.");
+                                        }
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                >
+                                    <Share2 size={16} className="text-slate-400"/> Copy Share Link
                                 </button>
                                 <button className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                                     <CheckCircle size={16} className="text-slate-400"/> Verification Details
@@ -147,8 +157,20 @@ const PreviewModal = ({ doc, onClose, onDownload }) => {
                         
                         <div className="mt-8 flex gap-3">
                             <button onClick={() => onDownload(doc.id, doc.fileName || doc.documentName)} className="flex-1 bg-slate-900 text-white py-2 rounded-xl text-sm font-medium hover:bg-slate-800 transition">Download</button>
-                            {doc.status === 'Approved' && (
-                                <button className="flex-1 border border-slate-200 text-slate-700 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition">Share</button>
+                            {doc.status === 'VERIFIED' && (
+                                <button 
+                                    onClick={() => {
+                                        if (doc.shareSlug) {
+                                            navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${doc.shareSlug}`);
+                                            alert("Share link copied to clipboard!");
+                                        } else {
+                                            alert("Share link not available.");
+                                        }
+                                    }}
+                                    className="flex-1 border border-slate-200 text-slate-700 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition"
+                                >
+                                    Copy Share Link
+                                </button>
                             )}
                         </div>
                     </div>
