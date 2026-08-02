@@ -74,4 +74,9 @@ public class SuperAdminController {
     public ResponseEntity<?> getStatistics() {
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<com.documentcentralizer.dto.SuperAdminDashboardStatsDTO> getDashboard() {
+        return ResponseEntity.ok(documentService.getSuperAdminDashboardStats());
+    }
 }

@@ -55,7 +55,7 @@ public class AdminController {
 
 
     @GetMapping("/dashboard")
-    public ResponseEntity<com.documentcentralizer.dto.DashboardStatsDTO> getDashboard() {
-        return ResponseEntity.ok(documentService.getDashboardStats());
+    public ResponseEntity<com.documentcentralizer.dto.AdminDashboardStatsDTO> getDashboard() {
+        return ResponseEntity.ok(documentService.getAdminDashboardStats());
     }
 }

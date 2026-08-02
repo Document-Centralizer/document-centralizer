@@ -246,17 +246,48 @@ public class DocumentServiceImpl implements DocumentService {
                 .toList();
     }
     @Override
-    public com.documentcentralizer.dto.DashboardStatsDTO getDashboardStats() {
-        long totalUsers = userRepository.count();
-        long totalDocuments = documentRepository.count();
-        long pendingDocuments = documentRepository.countByVerificationStatus("PENDING_ADMIN");
-        long verifiedDocuments = documentRepository.countByVerificationStatus("VERIFIED");
+    public com.documentcentralizer.dto.UserDashboardStatsDTO getUserDashboardStats(Long userId) {
+        long totalDocs = documentRepository.countByUserId(userId);
+        long approvedDocs = documentRepository.countByUserIdAndVerificationStatus(userId, "VERIFIED");
+        long rejectedDocs = documentRepository.countByUserIdAndVerificationStatus(userId, "REJECTED");
+        long pendingAdmin = documentRepository.countByUserIdAndVerificationStatus(userId, "PENDING_ADMIN");
+        long forwardedDocs = documentRepository.countByUserIdAndVerificationStatus(userId, "FORWARDED_TO_SUPERADMIN");
 
-        return com.documentcentralizer.dto.DashboardStatsDTO.builder()
-                .totalUsers(totalUsers)
-                .totalDocuments(totalDocuments)
-                .pendingDocuments(pendingDocuments)
-                .verifiedDocuments(verifiedDocuments)
+        return com.documentcentralizer.dto.UserDashboardStatsDTO.builder()
+                .totalDocuments(totalDocs)
+                .approvedDocuments(approvedDocs)
+                .rejectedDocuments(rejectedDocs)
+                .pendingDocuments(pendingAdmin + forwardedDocs)
+                .build();
+    }
+
+    @Override
+    public com.documentcentralizer.dto.AdminDashboardStatsDTO getAdminDashboardStats() {
+        long pendingDocs = documentRepository.countByVerificationStatus("PENDING_ADMIN");
+        long totalDocs = documentRepository.count();
+        long verifiedDocs = documentRepository.countByVerificationStatus("VERIFIED");
+
+        return com.documentcentralizer.dto.AdminDashboardStatsDTO.builder()
+                .pendingAdminDocuments(pendingDocs)
+                .totalDocuments(totalDocs)
+                .verifiedDocuments(verifiedDocs)
+                .build();
+    }
+
+    @Override
+    public com.documentcentralizer.dto.SuperAdminDashboardStatsDTO getSuperAdminDashboardStats() {
+        long forwardedDocs = documentRepository.countByVerificationStatus("FORWARDED_TO_SUPERADMIN");
+        long totalDocs = documentRepository.count();
+        long totalUsers = userRepository.count();
+        long verifiedDocs = documentRepository.countByVerificationStatus("VERIFIED");
+        long rejectedDocs = documentRepository.countByVerificationStatus("REJECTED");
+
+        return com.documentcentralizer.dto.SuperAdminDashboardStatsDTO.builder()
+                .forwardedDocuments(forwardedDocs)
+                .totalSystemDocuments(totalDocs)
+                .totalSystemUsers(totalUsers)
+                .totalVerifiedDocuments(verifiedDocs)
+                .totalRejectedDocuments(rejectedDocs)
                 .build();
     }
 
