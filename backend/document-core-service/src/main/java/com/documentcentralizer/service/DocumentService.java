@@ -102,12 +102,28 @@ public interface DocumentService {
      */
     List<MyDocumentResponse> getMyDocuments(Long userId);
     /*
-     * Method: getDashboardStats()
-     * Purpose: Retrieves overall statistics for the dashboard.
-     * Input: None.
-     * Output: DashboardStatsDTO object.
+     * Method: getUserDashboardStats()
+     * Purpose: Retrieves specific statistics for a user's dashboard.
+     * Input: User ID.
+     * Output: UserDashboardStatsDTO object.
      */
-    com.documentcentralizer.dto.DashboardStatsDTO getDashboardStats();
+    com.documentcentralizer.dto.UserDashboardStatsDTO getUserDashboardStats(Long userId);
+
+    /*
+     * Method: getAdminDashboardStats()
+     * Purpose: Retrieves statistics for the admin dashboard.
+     * Input: None.
+     * Output: AdminDashboardStatsDTO object.
+     */
+    com.documentcentralizer.dto.AdminDashboardStatsDTO getAdminDashboardStats();
+
+    /*
+     * Method: getSuperAdminDashboardStats()
+     * Purpose: Retrieves statistics for the super admin dashboard.
+     * Input: None.
+     * Output: SuperAdminDashboardStatsDTO object.
+     */
+    com.documentcentralizer.dto.SuperAdminDashboardStatsDTO getSuperAdminDashboardStats();
 
     /*
      * Method: downloadDocumentAsResource()

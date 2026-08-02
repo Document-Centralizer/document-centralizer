@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService userService;
+    private final com.documentcentralizer.service.DocumentService documentService;
 
 
     @GetMapping("/profile")
@@ -37,8 +38,9 @@ public class UserController {
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboard() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<com.documentcentralizer.dto.UserDashboardStatsDTO> getDashboard(Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(documentService.getUserDashboardStats(userId));
     }
 
     @PutMapping("/profile")

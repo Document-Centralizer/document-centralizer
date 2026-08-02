@@ -43,6 +43,12 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     // Count documents by verification status
     long countByVerificationStatus(String verificationStatus);
 
+    // Count documents by user id
+    long countByUserId(Long userId);
+
+    // Count documents by user id and verification status
+    long countByUserIdAndVerificationStatus(Long userId, String verificationStatus);
+
     // Find document by share slug
     java.util.Optional<Document> findByShareSlug(String shareSlug);
 }
