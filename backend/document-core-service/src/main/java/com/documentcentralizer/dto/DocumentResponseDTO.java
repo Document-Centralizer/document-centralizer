@@ -51,4 +51,10 @@ public class DocumentResponseDTO {
 
     @Schema(description = "ID of the user who uploaded the document", example = "5")
     private Long userId;
+
+    @Schema(description = "Admin remarks", example = "Approved after review")
+    private String adminRemark;
+
+    @Schema(description = "Unique slug for sharing", example = "abc123xyz")
+    private String shareSlug;
 }

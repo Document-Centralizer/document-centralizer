@@ -42,4 +42,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     // Count documents by verification status
     long countByVerificationStatus(String verificationStatus);
+
+    // Find document by share slug
+    java.util.Optional<Document> findByShareSlug(String shareSlug);
 }
