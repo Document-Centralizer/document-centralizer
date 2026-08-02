@@ -25,6 +25,7 @@ public class AuthBridgeService {
             if (documentType != null) {
                 switch (documentType.toUpperCase()) {
                     case "AADHAAR":
+                    case "AADHAAR CARD":
                         endpoint = "/verify/aadhaar";
                         break;
                     case "PAN":

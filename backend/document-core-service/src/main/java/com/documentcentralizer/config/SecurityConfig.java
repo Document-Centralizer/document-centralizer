@@ -88,8 +88,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 // Allow public access to authentication endpoints (login, register)
                 .requestMatchers("/api/auth/**").permitAll()
-                // Allow public access to document sharing
-                .requestMatchers("/api/documents/share/**").permitAll()
+                // Allow public access to document sharing and mock APIs
+                .requestMatchers("/api/documents/share/**", "/api/mock/authbridge/**").permitAll()
                 // Allow public access to Swagger UI and API documentation
                 .requestMatchers(
                         "/swagger-ui/**",

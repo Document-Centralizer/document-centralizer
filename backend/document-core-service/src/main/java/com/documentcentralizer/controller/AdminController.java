@@ -58,11 +58,7 @@ public class AdminController {
         return ResponseEntity.ok(forwardedDocument);
     }
 
-    @PutMapping("/documents/{id}/verify-authbridge")
-    public ResponseEntity<DocumentResponseDTO> verifyAuthBridge(@PathVariable Long id) {
-        DocumentResponseDTO verifiedDocument = documentService.verifyGovernmentDocument(id);
-        return ResponseEntity.ok(verifiedDocument);
-    }
+
 
     @GetMapping("/dashboard")
     public ResponseEntity<com.documentcentralizer.dto.DashboardStatsDTO> getDashboard() {
