@@ -19,23 +19,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
-/*
- * Class Name : DocumentServiceImpl
- *
- * Purpose:
- * This class contains the business logic related to documents.
- *
- * Responsibility:
- * - Save document information and upload files
- * - Fetch document details
- * - Update document details
- * - Delete document records
- *
- * Author:
- * CDAC Project
+/**
+ * Contains business logic for document operations like upload, fetch, update, and delete.
  */
 @Service
+@RequiredArgsConstructor
 public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentRepository documentRepository;
@@ -45,16 +35,6 @@ public class DocumentServiceImpl implements DocumentService {
     private final com.documentcentralizer.service.S3Service s3Service;
     private final OcrClient ocrClient;
 
-    // Constructor Injection
-    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository, ModelMapper modelMapper, com.documentcentralizer.service.AuthBridgeService authBridgeService, com.documentcentralizer.service.S3Service s3Service, OcrClient ocrClient) {
-        this.documentRepository = documentRepository;
-        this.userRepository = userRepository;
-        this.modelMapper = modelMapper;
-        this.authBridgeService = authBridgeService;
-        this.s3Service = s3Service;
-        this.ocrClient = ocrClient;
-    }
-
     private DocumentResponseDTO convertToDTO(Document document) {
         DocumentResponseDTO dto = modelMapper.map(document, DocumentResponseDTO.class);
         if (document.getUser() != null) {
@@ -63,25 +43,9 @@ public class DocumentServiceImpl implements DocumentService {
         return dto;
     }
 
-    /*
-     * Method: saveDocument()
-     *
-     * Purpose:
-     * Uploads a document received from the client.
-     *
-     * Input:
-     * MultipartFile uploaded by the user, metadata DTO, and User ID.
-     *
-     * Output:
-     * Saved document metadata.
-     *
-     * Processing:
-     * 1. Validate uploaded file.
-     * 2. Check if user exists.
-     * 3. Generate unique filename.
-     * 4. Save file locally (can be swapped for cloud storage later).
-     * 5. Store metadata in database.
-     * 6. Return success response.
+    /**
+     * Uploads a document to S3, processes OCR, and saves metadata.
+     * @return Saved document metadata (DocumentResponseDTO).
      */
     @Override
     public DocumentResponseDTO saveDocument(MultipartFile file, DocumentUploadRequestDTO requestDTO, Long userId) {
@@ -211,6 +175,11 @@ public class DocumentServiceImpl implements DocumentService {
         // Update verification status
         document.setVerificationStatus(status);
 
+        // Generate a share slug if it is verified and doesn't have one
+        if ("VERIFIED".equalsIgnoreCase(status) && document.getShareSlug() == null) {
+            document.setShareSlug(java.util.UUID.randomUUID().toString().substring(0, 8));
+        }
+
         // Set rejection reason if status is REJECTED
         if ("REJECTED".equalsIgnoreCase(status)) {
             document.setRejectionReason(reasonOrRemarks);
@@ -239,6 +208,9 @@ public class DocumentServiceImpl implements DocumentService {
             document.setVerificationStatus("VERIFIED");
             document.setRejectionReason(null);
             document.setRemarks("Auto-verified successfully via AuthBridge.");
+            if (document.getShareSlug() == null) {
+                document.setShareSlug(java.util.UUID.randomUUID().toString().substring(0, 8));
+            }
         } else {
             document.setVerificationStatus("REJECTED");
             document.setRejectionReason("AuthBridge verification failed. Invalid document or poor OCR quality.");
@@ -291,6 +263,23 @@ public class DocumentServiceImpl implements DocumentService {
         }
         
         // Fetch document directly from S3
+        return s3Service.downloadFile(document.getObjectKey());
+    }
+
+    @Override
+    public DocumentResponseDTO getDocumentMetadataByShareSlug(String shareSlug) {
+        Document document = documentRepository.findByShareSlug(shareSlug)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+        return convertToDTO(document);
+    }
+
+    @Override
+    public org.springframework.core.io.Resource getDocumentByShareSlug(String shareSlug) {
+        Document document = documentRepository.findByShareSlug(shareSlug)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+        if (!"VERIFIED".equals(document.getVerificationStatus())) {
+            throw new RuntimeException("Document not verified for sharing");
+        }
         return s3Service.downloadFile(document.getObjectKey());
     }
 }

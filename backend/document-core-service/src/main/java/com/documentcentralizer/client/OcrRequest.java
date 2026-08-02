@@ -1,17 +1,8 @@
 package com.documentcentralizer.client;
 
 /**
- * Purpose:
  * Represents the request payload for the OCR service.
- * 
- * Responsibility:
- * Holds the image or PDF file data required to extract text.
- * 
- * Usage:
- * Passed to OcrClient to trigger OCR processing.
- * 
- * Author:
- * CDAC Project
+ * Holds the image/PDF data needed to extract text.
  */
 public class OcrRequest {
     private String documentId;

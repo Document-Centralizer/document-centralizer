@@ -21,14 +21,19 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final ModelMapper modelMapper;
 	private final PasswordResetTokenRepository passwordResetTokenRepository;
 	private final EmailService emailService;
+	private final com.documentcentralizer.repository.BlacklistedTokenRepository blacklistedTokenRepository;
+	private final com.documentcentralizer.security.JwtUtil jwtUtil;
 
 	@Override
 	public AuthResponseDTO register(RegisterRequestDTO request) {
@@ -119,8 +124,6 @@ public class AuthServiceImpl implements AuthService {
 		log.info("Password successfully reset for user: {}", user.getEmail());
 	}
 
-	private final com.documentcentralizer.repository.BlacklistedTokenRepository blacklistedTokenRepository;
-	private final com.documentcentralizer.security.JwtUtil jwtUtil;
 
 	@Override
 	public void logout(String token) {
@@ -136,17 +139,6 @@ public class AuthServiceImpl implements AuthService {
 		log.info("Token successfully blacklisted for logout.");
 	}
 
-	public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, ModelMapper modelMapper,
-						   PasswordResetTokenRepository passwordResetTokenRepository, EmailService emailService,
-						   com.documentcentralizer.repository.BlacklistedTokenRepository blacklistedTokenRepository,
-						   com.documentcentralizer.security.JwtUtil jwtUtil) {
-	    this.userRepository = userRepository;
-	    this.passwordEncoder = passwordEncoder;
-	    this.modelMapper = modelMapper;
-	    this.passwordResetTokenRepository = passwordResetTokenRepository;
-	    this.emailService = emailService;
-		this.blacklistedTokenRepository = blacklistedTokenRepository;
-		this.jwtUtil = jwtUtil;
-	}
+
 
 }

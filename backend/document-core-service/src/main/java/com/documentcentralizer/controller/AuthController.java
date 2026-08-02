@@ -20,8 +20,11 @@ import com.documentcentralizer.entity.RefreshToken;
 import com.documentcentralizer.dto.RefreshTokenRequestDTO;
 import com.documentcentralizer.entity.User;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
@@ -29,15 +32,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
 
-    public AuthController(AuthService authService, 
-                          AuthenticationManager authMgr, 
-                          JwtUtil jwtUtil,
-                          RefreshTokenService refreshTokenService) {
-        this.authService = authService;
-        this.authMgr = authMgr;
-        this.jwtUtil = jwtUtil;
-        this.refreshTokenService = refreshTokenService;
-    }
+
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {

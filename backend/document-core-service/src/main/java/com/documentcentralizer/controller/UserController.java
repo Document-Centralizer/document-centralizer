@@ -18,15 +18,15 @@ import org.springframework.web.bind.annotation.*;
  * Author:
  * CDAC Project
  */
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping("/profile")
     public ResponseEntity<UserProfileDTO> getUserProfile(Authentication authentication) {
