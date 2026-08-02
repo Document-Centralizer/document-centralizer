@@ -18,10 +18,29 @@ public class AuthBridgeService {
         this.restTemplate = new RestTemplate();
     }
 
-    public boolean verifyWithAuthBridge(String ocrText) {
+    public boolean verifyWithAuthBridge(String ocrText, String documentType) {
         try {
-            // Point to our mock API
-            String url = "http://localhost:8080/api/mock/authbridge/verify";
+            // Determine endpoint based on documentType (e.g., AADHAAR, PAN, DRIVING_LICENSE, PASSPORT)
+            String endpoint = "/verify/pan"; // default fallback
+            if (documentType != null) {
+                switch (documentType.toUpperCase()) {
+                    case "AADHAAR":
+                        endpoint = "/verify/aadhaar";
+                        break;
+                    case "PAN":
+                    case "PAN_CARD":
+                        endpoint = "/verify/pan";
+                        break;
+                    case "DRIVING_LICENSE":
+                        endpoint = "/verify/driving-license";
+                        break;
+                    case "PASSPORT":
+                        endpoint = "/verify/passport";
+                        break;
+                }
+            }
+
+            String url = "http://localhost:8080/api/mock/authbridge" + endpoint;
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

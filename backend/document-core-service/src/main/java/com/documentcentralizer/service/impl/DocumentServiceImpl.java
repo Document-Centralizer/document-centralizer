@@ -212,7 +212,7 @@ public class DocumentServiceImpl implements DocumentService {
         Document document = getDocumentEntityById(id);
         
         // Call Mock AuthBridge API
-        boolean isSuccess = authBridgeService.verifyWithAuthBridge(document.getOcrText());
+        boolean isSuccess = authBridgeService.verifyWithAuthBridge(document.getOcrText(), document.getDocumentType());
         
         if (isSuccess) {
             document.setVerificationStatus("VERIFIED");
