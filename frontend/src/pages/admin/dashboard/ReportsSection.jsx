@@ -70,6 +70,22 @@ export default function ReportsSection() {
         setSelectedReport(selectedReport === reportId ? null : reportId);
     };
 
+    const exportToCSV = (data, filename) => {
+        if (!data || !data.length) return;
+        const headers = Object.keys(data[0]).join(",");
+        const csvRows = data.map(row => Object.values(row).join(","));
+        const csvString = [headers, ...csvRows].join("\n");
+        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="animate-in fade-in duration-300">
             <h2 className="text-xl font-bold text-gray-800 mb-6">System Reports</h2>
@@ -88,7 +104,12 @@ export default function ReportsSection() {
                 <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="flex justify-between items-center mb-8">
                         <h3 className="text-xl font-bold text-gray-800">User Growth Report</h3>
-                        <button className="text-sm bg-blue-600 text-white font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition shadow-sm">Export CSV</button>
+                        <button 
+                            onClick={() => exportToCSV(userGrowthData, 'user_growth_report.csv')}
+                            className="text-sm bg-blue-600 text-white font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition shadow-sm"
+                        >
+                            Export CSV
+                        </button>
                     </div>
                     <div className="flex items-end gap-2 sm:gap-4 h-64 border-b border-gray-100 pb-2">
                         {userGrowthData.map((data, idx) => {
@@ -115,7 +136,12 @@ export default function ReportsSection() {
                 <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="flex justify-between items-center mb-8">
                         <h3 className="text-xl font-bold text-gray-800">Subscriptions Growth Report</h3>
-                        <button className="text-sm bg-purple-600 text-white font-bold px-4 py-2 rounded-xl hover:bg-purple-700 transition shadow-sm">Export CSV</button>
+                        <button 
+                            onClick={() => exportToCSV(subscriptionsGrowthData, 'subscriptions_growth_report.csv')}
+                            className="text-sm bg-purple-600 text-white font-bold px-4 py-2 rounded-xl hover:bg-purple-700 transition shadow-sm"
+                        >
+                            Export CSV
+                        </button>
                     </div>
                     
                     <div className="overflow-x-auto border border-gray-100 rounded-2xl">
