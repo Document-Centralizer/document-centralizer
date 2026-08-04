@@ -38,9 +38,10 @@ application.properties
 
 
 # ==================================
-# VS Code
+# VS Code & Visual Studio
 # ==================================
 .vscode/
+.vs/
 
 
 # ==================================
@@ -78,6 +79,16 @@ env/
 bin/
 obj/
 
+# Visual Studio user files
+*.user
+*.suo
+
+# Rider
+.idea/
+
+# Visual Studio workspace
+.vs/
+
 
 # ==================================
 # Environment Variables
@@ -104,6 +115,7 @@ docker-compose.override.yml
 # ==================================
 .DS_Store
 Thumbs.db
+
 
 # ==================================
 # Temporary Files
