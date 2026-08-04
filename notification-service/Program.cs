@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 // This helps us test our APIs easily in the browser
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers(); // Enables Web API Controllers
 
 // Read the database connection string from appsettings.json
 // This connects our .NET API to the MySQL Database
@@ -46,6 +47,9 @@ if (app.Environment.IsDevelopment())
 
 // Redirect all HTTP requests to secure HTTPS
 app.UseHttpsRedirection();
+
+// Map the API controllers to routes
+app.MapControllers();
 
 // Start the application and listen for incoming requests
 app.Run();
