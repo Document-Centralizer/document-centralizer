@@ -51,4 +51,24 @@ public class UserController {
         UserProfileDTO updatedProfile = userService.updateAccountSettings(userId, updateDto);
         return ResponseEntity.ok(updatedProfile);
     }
+
+    @PostMapping(value = "/profile/image", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserProfileDTO> uploadProfileImage(
+            Authentication authentication,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        Long userId = Long.parseLong(authentication.getName());
+        UserProfileDTO updatedProfile = userService.uploadProfileImage(userId, file);
+        return ResponseEntity.ok(updatedProfile);
+    }
+
+    @GetMapping("/profile/image/{userId}")
+    public ResponseEntity<org.springframework.core.io.Resource> getProfileImage(@PathVariable Long userId) {
+        org.springframework.core.io.Resource resource = userService.downloadProfileImage(userId);
+        
+        // Determine content type dynamically or assume JPEG/PNG based on S3 metadata
+        // For simplicity, we just return the bytes with standard image headers.
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.IMAGE_JPEG)
+                .body(resource);
+    }
 }

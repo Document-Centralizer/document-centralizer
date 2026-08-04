@@ -17,4 +17,19 @@ public interface UserService {
      * @return UserProfileDTO containing safe profile details
      */
     UserProfileDTO updateAccountSettings(Long userId, com.documentcentralizer.dto.UpdateProfileRequestDTO dto);
+
+    /**
+     * Uploads and updates the user's profile image.
+     * @param userId The ID of the user
+     * @param file The image file to upload
+     * @return UserProfileDTO containing safe profile details
+     */
+    UserProfileDTO uploadProfileImage(Long userId, org.springframework.web.multipart.MultipartFile file);
+
+    /**
+     * Downloads the profile image for the given user ID.
+     * @param userId The ID of the user
+     * @return Resource representing the image file
+     */
+    org.springframework.core.io.Resource downloadProfileImage(Long userId);
 }
