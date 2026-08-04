@@ -91,11 +91,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         // 5a. Call OCR Service synchronously and save text
         try {
-            OcrRequest ocrRequest = new OcrRequest();
-            ocrRequest.setDocumentId(savedDocument.getId().toString());
-            ocrRequest.setFileUrl(objectKey);
-
-            OcrResponse ocrResponse = ocrClient.processDocument(ocrRequest);
+            OcrResponse ocrResponse = ocrClient.processDocument(file);
             if (ocrResponse != null && ocrResponse.getExtractedText() != null) {
                 savedDocument.setOcrText(ocrResponse.getExtractedText());
                 savedDocument.setOcrConfidenceScore(ocrResponse.getConfidenceScore());
@@ -111,7 +107,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public List<DocumentResponseDTO> getAllDocuments() {
-        return documentRepository.findByIsDeletedFalse().stream()
+        return documentRepository.findByIsDeletedFalseOrderByUploadedAtDesc().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -160,7 +156,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public List<DocumentResponseDTO> getDocumentsByStatus(String status) {
-        return documentRepository.findByVerificationStatus(status).stream()
+        return documentRepository.findByVerificationStatusOrderByUploadedAtDesc(status).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }

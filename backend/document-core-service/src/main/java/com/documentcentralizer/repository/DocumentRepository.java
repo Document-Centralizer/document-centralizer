@@ -24,9 +24,18 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     // Find documents by verification status
     List<Document> findByVerificationStatus(String verificationStatus);
+    
+    // Find documents by verification status ordered by date
+    List<Document> findByVerificationStatusOrderByUploadedAtDesc(String verificationStatus);
 
     // Find documents by document type
     List<Document> findByDocumentType(String documentType);
+
+    // Find documents by deleted status
+    List<Document> findByIsDeletedFalse();
+    
+    // Find documents by deleted status ordered by date
+    List<Document> findByIsDeletedFalseOrderByUploadedAtDesc();
 
     // Find documents uploaded by a specific user
     List<Document> findByUserId(Long userId);
@@ -34,8 +43,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     // Find documents uploaded by a specific user, sorted by newest first
     List<Document> findByUserIdOrderByUploadedAtDesc(Long userId);
 
-    // Find all active (not deleted) documents
-    List<Document> findByIsDeletedFalse();
 
     // Check if a document with the same stored file name already exists
     boolean existsByStoredFileName(String storedFileName);
