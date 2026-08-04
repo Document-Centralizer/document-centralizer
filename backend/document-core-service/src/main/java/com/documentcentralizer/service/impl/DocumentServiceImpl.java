@@ -207,6 +207,10 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Save updated document in database
         Document updatedDocument = documentRepository.save(document);
+        
+        // Trigger notification to the .NET microservice
+        sendNotificationToDotNet(updatedDocument);
+        
         return convertToDTO(updatedDocument);
     }
 
@@ -231,6 +235,10 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         Document updatedDocument = documentRepository.save(document);
+        
+        // Trigger notification to the .NET microservice
+        sendNotificationToDotNet(updatedDocument);
+        
         return convertToDTO(updatedDocument);
     }
 
@@ -371,5 +379,43 @@ public class DocumentServiceImpl implements DocumentService {
             throw new RuntimeException("Document not verified for sharing");
         }
         return s3Service.downloadFile(document.getObjectKey());
+    }
+
+    /**
+     * Helper method to send HTTP POST to the .NET Notification Microservice
+     */
+    private void sendNotificationToDotNet(Document document) {
+        if ("VERIFIED".equalsIgnoreCase(document.getVerificationStatus()) || "REJECTED".equalsIgnoreCase(document.getVerificationStatus())) {
+            try {
+                org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+                java.util.Map<String, String> payload = new java.util.HashMap<>();
+                User user = document.getUser();
+                if(user == null) return;
+                
+                payload.put("userEmail", user.getEmail());
+                payload.put("userPhone", user.getPhoneNumber() != null ? user.getPhoneNumber() : "+910000000000"); // fallback
+                payload.put("userName", user.getFirstName() + " " + user.getLastName());
+                payload.put("documentName", document.getDocumentName());
+                payload.put("status", document.getVerificationStatus().toUpperCase());
+                payload.put("remarks", document.getRemarks() != null ? document.getRemarks() : "");
+
+                org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+                headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+                org.springframework.http.HttpEntity<java.util.Map<String, String>> request = new org.springframework.http.HttpEntity<>(payload, headers);
+                
+                // Fire and forget in a separate thread so it doesn't block the main Java thread
+                new Thread(() -> {
+                    try {
+                        restTemplate.postForEntity("http://localhost:5179/api/notify", request, String.class);
+                        System.out.println("Notification sent to .NET service successfully");
+                    } catch (Exception e) {
+                        System.err.println("Failed to trigger .NET Notification service: " + e.getMessage());
+                    }
+                }).start();
+                
+            } catch (Exception e) {
+                System.err.println("Error preparing notification payload: " + e.getMessage());
+            }
+        }
     }
 }

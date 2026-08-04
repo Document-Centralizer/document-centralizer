@@ -42,14 +42,17 @@ namespace notification_service.Controllers
             string htmlMessage = "";
             string smsMessage = "";
 
-            if (payload.Status == "VERIFIED")
+            // Convert status to uppercase to avoid case-sensitivity issues (e.g. "rejected" vs "REJECTED")
+            string statusUpper = payload.Status.ToUpper();
+
+            if (statusUpper == "VERIFIED")
             {
                 subject = "Document Verified Successfully!";
                 htmlMessage = $"<h3>Congratulations {payload.UserName},</h3>" +
                               $"<p>Your document <b>'{payload.DocumentName}'</b> has been successfully verified by our administrators.</p>";
                 smsMessage = $"Hello {payload.UserName}, your document '{payload.DocumentName}' is Verified!";
             }
-            else if (payload.Status == "REJECTED")
+            else if (statusUpper == "REJECTED")
             {
                 subject = "Document Rejected - Action Required";
                 htmlMessage = $"<h3>Hi {payload.UserName},</h3>" +
