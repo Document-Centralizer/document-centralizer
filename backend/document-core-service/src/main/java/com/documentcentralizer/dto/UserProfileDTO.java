@@ -20,4 +20,5 @@ public class UserProfileDTO {
     private String pincode;
     private String profileImageUrl;
     private Role role;
+    private Boolean isPremium;
 }

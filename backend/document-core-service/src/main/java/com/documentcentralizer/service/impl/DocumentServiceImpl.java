@@ -22,7 +22,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Contains business logic for document operations like upload, fetch, update, and delete.
+ * Contains business logic for document operations like upload, fetch, update,
+ * and delete.
  */
 @Service
 @RequiredArgsConstructor
@@ -45,21 +46,31 @@ public class DocumentServiceImpl implements DocumentService {
 
     /**
      * Uploads a document to S3, processes OCR, and saves metadata.
+     * 
      * @return Saved document metadata (DocumentResponseDTO).
      */
     @Override
     public DocumentResponseDTO saveDocument(MultipartFile file, DocumentUploadRequestDTO requestDTO, Long userId) {
-        // 1. Upload file to S3
-        String objectKey = s3Service.uploadFile(file);
-
-        // 2. Check if user exists
+        // 1. Check if user exists (Moved up to prevent S3 upload if invalid or limited)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // 2. Check Subscription Limits
+        if (!Boolean.TRUE.equals(user.getIsPremium())) {
+            long totalCount = documentRepository.countByUserId(userId);
+            if (totalCount >= 10) {
+                throw new RuntimeException(
+                        "Free plan limit exceeded. Please upgrade to a Premium subscription to store more documents.");
+            }
+        }
+
+        // 3. Upload file to S3
+        String objectKey = s3Service.uploadFile(file);
 
         String originalFileName = file.getOriginalFilename();
         String storedFileName = objectKey.substring(objectKey.lastIndexOf("/") + 1);
 
-        // 3. Store metadata in database
+        // 4. Store metadata in database
         // Map DTO to Entity
         Document document = modelMapper.map(requestDTO, Document.class);
 
@@ -70,20 +81,20 @@ public class DocumentServiceImpl implements DocumentService {
         document.setObjectKey(objectKey);
         document.setFileSize(file.getSize());
         document.setContentType(file.getContentType());
-        
+
         // Set default values for new document
         document.setVerificationStatus("PENDING_ADMIN");
         document.setIsDeleted(false);
 
         // Save metadata into database
         Document savedDocument = documentRepository.save(document);
-        
+
         // 5a. Call OCR Service synchronously and save text
         try {
             OcrRequest ocrRequest = new OcrRequest();
             ocrRequest.setDocumentId(savedDocument.getId().toString());
             ocrRequest.setFileUrl(objectKey);
-            
+
             OcrResponse ocrResponse = ocrClient.processDocument(ocrRequest);
             if (ocrResponse != null && ocrResponse.getExtractedText() != null) {
                 savedDocument.setOcrText(ocrResponse.getExtractedText());
@@ -92,12 +103,10 @@ public class DocumentServiceImpl implements DocumentService {
         } catch (Exception e) {
             System.err.println("Failed to process OCR during document upload: " + e.getMessage());
         }
-        
+
         // 6. Return successful response
         return convertToDTO(savedDocument);
     }
-
-
 
     @Override
     public List<DocumentResponseDTO> getAllDocuments() {
@@ -193,7 +202,7 @@ public class DocumentServiceImpl implements DocumentService {
             // Only clear rejection reason if not VERIFIED (since VERIFIED clears it above)
             document.setRejectionReason(null);
         }
-        
+
         // Set remarks if status is FORWARDED_TO_SUPERADMIN
         if ("FORWARDED_TO_SUPERADMIN".equalsIgnoreCase(status)) {
             document.setRemarks(reasonOrRemarks);
@@ -207,10 +216,10 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponseDTO verifyGovernmentDocument(Long id) {
         Document document = getDocumentEntityById(id);
-        
+
         // Call Mock AuthBridge API
         boolean isSuccess = authBridgeService.verifyWithAuthBridge(document.getOcrText(), document.getDocumentType());
-        
+
         if (isSuccess) {
             document.setVerificationStatus("VERIFIED");
             document.setRejectionReason(null);
@@ -223,7 +232,7 @@ public class DocumentServiceImpl implements DocumentService {
             document.setRejectionReason("AuthBridge verification failed. Invalid document or poor OCR quality.");
             document.setRemarks("Auto-rejected via AuthBridge.");
         }
-        
+
         Document updatedDocument = documentRepository.save(document);
         return convertToDTO(updatedDocument);
     }
@@ -245,6 +254,7 @@ public class DocumentServiceImpl implements DocumentService {
                         .build())
                 .toList();
     }
+
     @Override
     public com.documentcentralizer.dto.UserDashboardStatsDTO getUserDashboardStats(Long userId) {
         long totalDocs = documentRepository.countByUserId(userId);
@@ -295,11 +305,11 @@ public class DocumentServiceImpl implements DocumentService {
     public org.springframework.core.io.Resource downloadDocumentAsResource(Long id) {
         // Find the document record in the database
         Document document = getDocumentEntityById(id);
-        
+
         if (document.getObjectKey() == null) {
             throw new RuntimeException("This document was uploaded before S3 integration and is no longer available.");
         }
-        
+
         // Fetch document directly from S3
         return s3Service.downloadFile(document.getObjectKey());
     }

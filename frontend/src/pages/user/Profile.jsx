@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
+import toast from 'react-hot-toast';
 
 // Dummy activity data
 const activityLog = [
@@ -162,36 +163,39 @@ const Profile = () => {
     const [userData, setUserData]       = useState(null);
     const photoRef = useRef(null);
 
-    // Hardcoded test email for now since JWT is not implemented yet
-    const testEmail = "prasad@gmail.com"; 
-
     const fetchProfile = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/users/profile?email=${testEmail}`);
-            if (response.ok) {
-                const data = await response.json();
-                // Map the backend data to the UI structure, adding some hardcoded fillers for visuals
-                setUserData({
-                    ...data,
-                    fullName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
-                    userId: "USR-2026-10042",
-                    plan: "Premium",
-                    joined: "January 2026",
-                    lastLogin: "Today, 1:14 PM",
-                    lastPasswordChange: "15 May 2026",
-                    emailVerified: true,
-                    mobileVerified: true,
-                    twoFA: false,
-                    passwordStrength: "Strong",
-                    location: `${data.city || 'City'}, ${data.state || 'State'}`,
-                    avatarInitials: data.firstName ? data.firstName[0].toUpperCase() : "U",
-                    completeness: data.address ? 100 : 85,
-                    docs: { total: 28, approved: 20, pending: 5, rejected: 3 }
-                });
-            } else {
-                console.error("Failed to fetch profile");
+            const { getUserData } = await import('../../utils/localStorage');
+            const { default: api } = await import('../../services/api');
+            const user = getUserData();
+            
+            if (!user || !user.email) {
+                console.error("No user found in local storage");
+                return;
             }
+
+            const response = await api.get(`/users/profile?email=${user.email}`);
+            const data = response.data;
+            // Map the backend data to the UI structure, adding some hardcoded fillers for visuals
+            setUserData({
+                ...data,
+                fullName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+                userId: "USR-2026-10042",
+                isPremium: data.isPremium,
+                plan: data.isPremium ? "Premium" : "Free Plan",
+                joined: "January 2026",
+                lastLogin: "Today, 1:14 PM",
+                lastPasswordChange: "15 May 2026",
+                emailVerified: true,
+                mobileVerified: true,
+                twoFA: false,
+                passwordStrength: "Strong",
+                location: `${data.city || 'City'}, ${data.state || 'State'}`,
+                avatarInitials: data.firstName ? data.firstName[0].toUpperCase() : "U",
+                completeness: data.address ? 100 : 85,
+                docs: { total: 28, approved: 20, pending: 5, rejected: 3 }
+            });
         } catch (error) {
             console.error("Error fetching profile:", error);
         } finally {
@@ -205,14 +209,14 @@ const Profile = () => {
 
     const handleSaveProfile = async (updatedForm) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/users/profile?email=${testEmail}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updatedForm)
-            });
-            if (response.ok) {
+            const { getUserData } = await import('../../utils/localStorage');
+            const { default: api } = await import('../../services/api');
+            const user = getUserData();
+            
+            if (!user || !user.email) return;
+
+            const response = await api.put(`/users/profile?email=${user.email}`, updatedForm);
+            if (response.status === 200) {
                 // Refresh data from server to reflect changes safely
                 await fetchProfile();
                 setShowEdit(false);
@@ -228,6 +232,72 @@ const Profile = () => {
     const handlePhoto = (e) => {
         const file = e.target.files[0];
         if (file) setPhoto(URL.createObjectURL(file));
+    };
+
+    const loadRazorpay = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handleUpgrade = async () => {
+        const res = await loadRazorpay();
+        if (!res) {
+            toast.error("Razorpay SDK failed to load. Are you online?");
+            return;
+        }
+
+        try {
+            const { default: api } = await import('../../services/api');
+            
+            // 1. Create Order on Backend
+            const orderRes = await api.post('/payment/create-order');
+            
+            // 2. Configure Razorpay Options
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Frontend .env key
+                amount: orderRes.data.amount,
+                currency: orderRes.data.currency,
+                name: "Document Centralizer",
+                description: "Lifetime Premium Subscription",
+                order_id: orderRes.data.orderId,
+                handler: async function (response) {
+                    try {
+                        // 3. Verify Payment on Backend
+                        const verifyRes = await api.post('/payment/verify', {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+                        
+                        if (verifyRes.data.status === "SUCCESS") {
+                            toast.success("Welcome to Premium! You now have unlimited uploads.");
+                            fetchProfile(); // Refresh profile to show Premium UI
+                        }
+                    } catch (err) {
+                        toast.error("Payment verification failed.");
+                    }
+                },
+                prefill: {
+                    name: userData?.fullName || "User",
+                    email: userData?.email || "user@example.com",
+                },
+                theme: {
+                    color: "#3399cc"
+                }
+            };
+            
+            // 3. Open Razorpay Checkout
+            const paymentObject = new window.Razorpay(options);
+            paymentObject.open();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to initialize payment. Try again.");
+        }
     };
 
     if (isLoading || !userData) {
@@ -287,9 +357,11 @@ const Profile = () => {
                                 <span className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                                     <ShieldCheck size={12}/> Verified
                                 </span>
-                                <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 border border-yellow-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    <Star size={12}/> Premium
-                                </span>
+                                {userData.isPremium && (
+                                    <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 border border-yellow-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                        <Star size={12}/> Premium
+                                    </span>
+                                )}
                             </div>
                             <p className="text-slate-500 text-sm">{userData.email}</p>
                             <div className="flex flex-wrap gap-6 mt-4 text-sm text-slate-500">
@@ -483,17 +555,28 @@ const Profile = () => {
                     <Card>
                         <CardHeader title="Subscription" />
                         <CardContent className="pt-0 space-y-4">
-                            <div className="bg-slate-900 rounded-xl p-4 text-white">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="flex items-center gap-1.5 text-yellow-400 text-xs font-bold uppercase"><Star size={12}/> Premium</span>
-                                    <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Active</span>
+                            {userData.isPremium ? (
+                                <div className="bg-slate-900 rounded-xl p-4 text-white">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="flex items-center gap-1.5 text-yellow-400 text-xs font-bold uppercase"><Star size={12}/> Premium</span>
+                                        <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Active</span>
+                                    </div>
+                                    <p className="text-xl font-black">Lifetime Access</p>
+                                    <p className="text-xs text-slate-400 mt-1">Unlimited uploads unlocked</p>
                                 </div>
-                                <p className="text-xl font-black">₹199 <span className="text-sm font-normal text-slate-400">/ month</span></p>
-                                <p className="text-xs text-slate-400 mt-1">Renews: 25 August 2026</p>
-                            </div>
-                            <Link to="/user/subscription" className="w-full flex items-center justify-center gap-2 border border-slate-200 text-slate-700 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition">
-                                View Subscription <ChevronRight size={16}/>
-                            </Link>
+                            ) : (
+                                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="flex items-center gap-1.5 text-slate-700 text-xs font-bold uppercase"><User size={12}/> Free Plan</span>
+                                        <span className="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">Current</span>
+                                    </div>
+                                    <p className="text-xl font-black text-slate-800">Max 10 Documents</p>
+                                    <p className="text-xs text-slate-500 mt-1">Upgrade for unlimited access</p>
+                                    <button onClick={handleUpgrade} className="w-full mt-4 bg-slate-900 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition">
+                                        Upgrade Now - ₹99
+                                    </button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
