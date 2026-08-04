@@ -90,6 +90,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 // Allow public access to document sharing and mock APIs
                 .requestMatchers("/api/documents/share/**", "/api/mock/authbridge/**").permitAll()
+                // Allow public access to user profile images
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users/profile/image/**").permitAll()
                 // Allow public access to Swagger UI and API documentation
                 .requestMatchers(
                         "/swagger-ui/**",
