@@ -23,6 +23,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
 
+// Register our Email Service
+// AddScoped means a new instance is created once per HTTP request
+builder.Services.AddScoped<notification_service.Services.IEmailService, notification_service.Services.EmailService>();
+
 var app = builder.Build();
 
 // ==========================================
