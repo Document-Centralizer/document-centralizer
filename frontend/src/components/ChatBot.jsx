@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import { getToken } from '../utils/localStorage';
 
 export default function ChatBot() {
     const { user } = useContext(AuthContext);
@@ -33,9 +34,15 @@ export default function ChatBot() {
         setLoading(true);
 
         try {
+            const token = getToken();
+            const headers = { "Content-Type": "application/json" };
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+
             const response = await fetch("http://localhost:8000/chat", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: headers,
                 body: JSON.stringify({ message: userMessage })
             });
 
