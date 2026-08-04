@@ -9,25 +9,9 @@ import {
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import toast from 'react-hot-toast';
+import api from '../../services/api';
 
-// Dummy activity data
-const activityLog = [
-    { id: 1, action: "Successful Login",      time: "Today, 1:14 PM",  type: "login",    icon: ShieldCheck },
-    { id: 2, action: "Document Approved",     time: "Yesterday",        type: "approve",  icon: CheckCircle },
-    { id: 3, action: "Document Uploaded",     time: "2 days ago",       type: "upload",   icon: UploadCloud },
-    { id: 4, action: "Subscription Renewed",  time: "5 days ago",       type: "billing",  icon: Star },
-    { id: 5, action: "Password Changed",      time: "15 May 2026",      type: "security", icon: Lock },
-    { id: 6, action: "Profile Updated",       time: "10 Jan 2026",      type: "profile",  icon: User },
-];
 
-const activityColor = {
-    login: "bg-green-100 text-green-600",
-    approve: "bg-emerald-100 text-emerald-600",
-    upload: "bg-blue-100 text-blue-600",
-    billing: "bg-yellow-100 text-yellow-600",
-    security: "bg-orange-100 text-orange-600",
-    profile: "bg-purple-100 text-purple-600",
-};
 
 // ---- PROGRESS CIRCLE ----
 const ProgressCircle = ({ pct, size = 120, stroke = 8 }) => {
@@ -85,15 +69,30 @@ const EditProfileModal = ({ userData, onClose, onSave }) => {
                         ))}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        {[["mobileNumber","Mobile Number"],["dob","Date of Birth"]].map(([n,l]) => (
-                            <div key={n}><label className="block text-xs font-medium text-slate-600 mb-1">{l}</label>
-                            <input name={n} value={form[n]} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 focus:bg-white" /></div>
-                        ))}
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Mobile Number</label>
+                            <input name="mobileNumber" value={form.mobileNumber} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 focus:bg-white" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Date of Birth</label>
+                            <input type="date" name="dob" value={form.dob} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 focus:bg-white" />
+                        </div>
                     </div>
-                    {[["address","Address"]].map(([n,l]) => (
-                        <div key={n}><label className="block text-xs font-medium text-slate-600 mb-1">{l}</label>
-                        <input name={n} value={form[n]} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 focus:bg-white" /></div>
-                    ))}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Gender</label>
+                            <select name="gender" value={form.gender} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 focus:bg-white">
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Address</label>
+                        <input name="address" value={form.address} onChange={handleChange} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 focus:bg-white" />
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                         {[["city","City"],["state","State"],["country","Country"],["pincode","Pincode"]].map(([n,l]) => (
                             <div key={n}><label className="block text-xs font-medium text-slate-600 mb-1">{l}</label>
@@ -166,36 +165,40 @@ const Profile = () => {
     const fetchProfile = async () => {
         setIsLoading(true);
         try {
-            const { getUserData } = await import('../../utils/localStorage');
-            const { default: api } = await import('../../services/api');
-            const user = getUserData();
+            const [profileRes, dashboardRes] = await Promise.all([
+                api.get('/users/profile'),
+                api.get('/users/dashboard').catch(() => ({ data: {} })) // fallback if dashboard fails
+            ]);
             
-            if (!user || !user.email) {
-                console.error("No user found in local storage");
-                return;
-            }
+            const data = profileRes.data;
+            const stats = dashboardRes.data || {};
 
-            const response = await api.get(`/users/profile?email=${user.email}`);
-            const data = response.data;
-            // Map the backend data to the UI structure, adding some hardcoded fillers for visuals
+            // Calculate completeness
+            let filledFields = 0;
+            const fieldsToCheck = ['firstName', 'lastName', 'mobileNumber', 'dob', 'gender', 'address', 'city', 'state', 'country', 'pincode'];
+            fieldsToCheck.forEach(f => { if (data[f]) filledFields++; });
+            const completeness = Math.round((filledFields / fieldsToCheck.length) * 100);
+
             setUserData({
                 ...data,
-                fullName: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
-                userId: "USR-2026-10042",
+                fullName: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.username || 'User',
+                userId: `USR-2026-${data.id || '0000'}`,
                 isPremium: data.isPremium,
                 plan: data.isPremium ? "Premium" : "Free Plan",
-                joined: "January 2026",
-                lastLogin: "Today, 1:14 PM",
-                lastPasswordChange: "15 May 2026",
-                emailVerified: true,
-                mobileVerified: true,
-                twoFA: false,
-                passwordStrength: "Strong",
-                location: `${data.city || 'City'}, ${data.state || 'State'}`,
-                avatarInitials: data.firstName ? data.firstName[0].toUpperCase() : "U",
-                completeness: data.address ? 100 : 85,
-                docs: { total: 28, approved: 20, pending: 5, rejected: 3 }
+                location: data.city || data.state ? `${data.city || ''}, ${data.state || ''}`.replace(/^, |^,$/, '') : 'No location added',
+                avatarInitials: data.firstName ? data.firstName[0].toUpperCase() : (data.username ? data.username[0].toUpperCase() : "U"),
+                completeness: completeness,
+                docs: { 
+                    total: stats.totalDocuments || 0, 
+                    approved: stats.approvedDocuments || 0, 
+                    pending: stats.pendingDocuments || 0, 
+                    rejected: stats.rejectedDocuments || 0 
+                }
             });
+
+            if (data.profileImageUrl) {
+                setPhoto(`http://localhost:8080/api/users/profile/image/${data.id}?t=${new Date().getTime()}`);
+            }
         } catch (error) {
             console.error("Error fetching profile:", error);
         } finally {
@@ -209,29 +212,32 @@ const Profile = () => {
 
     const handleSaveProfile = async (updatedForm) => {
         try {
-            const { getUserData } = await import('../../utils/localStorage');
-            const { default: api } = await import('../../services/api');
-            const user = getUserData();
-            
-            if (!user || !user.email) return;
-
-            const response = await api.put(`/users/profile?email=${user.email}`, updatedForm);
-            if (response.status === 200) {
-                // Refresh data from server to reflect changes safely
-                await fetchProfile();
-                setShowEdit(false);
-            } else {
-                console.error("Update failed");
-                alert("Failed to update profile. Check the fields.");
-            }
+            await api.put('/users/profile', updatedForm);
+            await fetchProfile();
+            setShowEdit(false);
         } catch (error) {
             console.error("Error updating profile:", error);
+            alert("Failed to update profile. Check the fields.");
         }
     };
 
-    const handlePhoto = (e) => {
+    const handlePhoto = async (e) => {
         const file = e.target.files[0];
-        if (file) setPhoto(URL.createObjectURL(file));
+        if (file) {
+            setPhoto(URL.createObjectURL(file)); // Optimistic UI update
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                await api.post('/users/profile/image', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                await fetchProfile();
+            } catch (error) {
+                console.error("Error uploading profile image:", error);
+                alert("Failed to upload profile image.");
+                setPhoto(null);
+            }
+        }
     };
 
     const loadRazorpay = () => {
@@ -367,13 +373,16 @@ const Profile = () => {
                             <div className="flex flex-wrap gap-6 mt-4 text-sm text-slate-500">
                                 <span className="flex items-center gap-1.5"><User size={14}/> {userData.role || 'USER'}</span>
                                 <span className="flex items-center gap-1.5"><MapPin size={14}/> {userData.location}</span>
-                                <span className="flex items-center gap-1.5"><Calendar size={14}/> Joined {userData.joined}</span>
-                                <span className="flex items-center gap-1.5"><Activity size={14}/> Last login: {userData.lastLogin}</span>
                             </div>
                         </div>
                         {/* Stats Quick */}
                         <div className="grid grid-cols-2 gap-3">
-                            {[["28","Total","text-slate-800"],["20","Approved","text-green-700"],["5","Pending","text-yellow-700"],["3","Rejected","text-red-700"]].map(([v,l,c]) => (
+                            {[
+                                [d.total, "Total", "text-slate-800"],
+                                [d.approved, "Approved", "text-green-700"],
+                                [d.pending, "Pending", "text-yellow-700"],
+                                [d.rejected, "Rejected", "text-red-700"]
+                            ].map(([v,l,c]) => (
                                 <div key={l} className="text-center bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
                                     <p className={`text-xl font-black ${c}`}>{v}</p>
                                     <p className="text-xs text-slate-500 mt-0.5">{l}</p>
@@ -424,12 +433,7 @@ const Profile = () => {
                                 { label: "User ID",           value: userData.userId },
                                 { label: "Username",          value: userData.username || '-' },
                                 { label: "Role",              value: userData.role || 'USER' },
-                                { label: "Subscription Plan", value: userData.plan },
-                                { label: "Registration Date", value: userData.joined },
-                                { label: "Last Login",        value: userData.lastLogin },
                                 { label: "Account Status",    value: "Active" },
-                                { label: "Email Verified",    value: userData.emailVerified ? "Yes ✓" : "No" },
-                                { label: "Mobile Verified",   value: userData.mobileVerified ? "Yes ✓" : "No" },
                             ].map((item, i) => (
                                 <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
                                     <p className="text-xs text-slate-400 mb-1">{item.label}</p>
@@ -439,57 +443,7 @@ const Profile = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Security Card */}
-                    <Card>
-                        <CardHeader title="Account Security" />
-                        <CardContent className="space-y-4">
-                            {[
-                                { label: "Password",              value: userData.passwordStrength, icon: Lock,         ok: true },
-                                { label: "Email Verified",        value: "Verified",                icon: Mail,         ok: true },
-                                { label: "Mobile Verified",       value: "Verified",                icon: Smartphone,   ok: true },
-                                { label: "Two-Factor Auth (2FA)", value: "Disabled",               icon: ShieldCheck,  ok: false },
-                                { label: "Last Password Change",  value: userData.lastPasswordChange, icon: Key,        ok: true },
-                            ].map((s, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.ok ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                                            <s.icon size={18}/>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-slate-800">{s.label}</p>
-                                            <p className={`text-xs ${s.ok ? 'text-green-600' : 'text-red-500'}`}>{s.value}</p>
-                                        </div>
-                                    </div>
-                                    {s.ok ? <CheckCircle size={18} className="text-green-500"/> : <AlertTriangle size={18} className="text-red-400"/>}
-                                </div>
-                            ))}
-                            <div className="flex flex-wrap gap-3 pt-2">
-                                <button onClick={() => setShowPwd(true)} className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition flex items-center gap-2"><Key size={16}/> Change Password</button>
-                                <button className="border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition flex items-center gap-2"><ShieldCheck size={16}/> Enable 2FA</button>
-                            </div>
-                        </CardContent>
-                    </Card>
 
-                    {/* Activity Timeline */}
-                    <Card>
-                        <CardHeader title="Recent Account Activity" />
-                        <CardContent className="space-y-4">
-                            <div className="relative space-y-4 before:absolute before:inset-0 before:ml-5 before:h-full before:w-px before:bg-slate-100">
-                                {activityLog.map((act, idx) => (
-                                    <motion.div key={act.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.07 }}
-                                        className="relative flex items-start gap-4">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white shadow-sm ${activityColor[act.type]}`}>
-                                            <act.icon size={16}/>
-                                        </div>
-                                        <div className="flex-1 flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-                                            <p className="text-sm font-semibold text-slate-800">{act.action}</p>
-                                            <p className="text-xs text-slate-400 ml-4 shrink-0">{act.time}</p>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
 
                 </div>
 
@@ -503,11 +457,11 @@ const Profile = () => {
                             <ProgressCircle pct={userData.completeness} />
                             <div className="w-full space-y-2">
                                 <p className="text-sm font-semibold text-slate-700">To improve, add:</p>
-                                {["Upload Profile Photo","Enable 2FA","Complete Address"].map((tip, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-xs text-slate-500 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                                        <AlertTriangle size={14} className="text-amber-500 shrink-0"/> {tip}
+                                {userData.completeness < 100 && (
+                                    <div className="flex items-center gap-2 text-xs text-slate-500 p-2 bg-slate-50 rounded-lg border border-slate-100 mt-2">
+                                        <AlertTriangle size={14} className="text-amber-500 shrink-0"/> Complete your profile by editing it!
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -530,26 +484,6 @@ const Profile = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Security Status */}
-                    <Card>
-                        <CardHeader title="Security Status" />
-                        <CardContent className="pt-0 space-y-3">
-                            {[
-                                { label: "Password",  ok: true },
-                                { label: "Email",     ok: userData.emailVerified },
-                                { label: "Mobile",    ok: userData.mobileVerified },
-                                { label: "2FA",       ok: userData.twoFA },
-                            ].map((s, i) => (
-                                <div key={i} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                                    <span className="text-sm text-slate-600">{s.label}</span>
-                                    {s.ok
-                                        ? <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200"><CheckCircle size={12}/> Secure</span>
-                                        : <span className="flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200"><AlertTriangle size={12}/> Off</span>
-                                    }
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
 
                     {/* Subscription Card */}
                     <Card>

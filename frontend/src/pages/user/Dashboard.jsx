@@ -1,24 +1,42 @@
-
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from "../../components/ui/Card";
 import { FileText, Clock3, CheckCircle, XCircle, Upload, File } from "lucide-react";
 import { Badge } from "../../components/ui/Badge";
 import { Link } from "react-router-dom";
-
-const stats = [
-    { title: "Total Documents", value: "1,250", icon: FileText, color: "text-blue-500", bg: "bg-blue-50" },
-    { title: "Pending", value: "42", icon: Clock3, color: "text-yellow-500", bg: "bg-yellow-50" },
-    { title: "Approved", value: "1,180", icon: CheckCircle, color: "text-green-500", bg: "bg-green-50" },
-    { title: "Rejected", value: "28", icon: XCircle, color: "text-red-500", bg: "bg-red-50" },
-];
-
-const recentDocs = [
-    { id: 1, name: "Aadhaar_Card_Front.pdf", category: "Aadhaar", date: "2026-07-20", status: "Approved" },
-    { id: 2, name: "PAN_Card_Scanned.pdf", category: "PAN", date: "2026-07-21", status: "Pending" },
-    { id: 3, name: "10th_Marksheet_Original.jpg", category: "10th Marksheet", date: "2026-07-21", status: "Pending" },
-    { id: 4, name: "Passport_Copy.pdf", category: "Passport", date: "2026-07-19", status: "Rejected" },
-];
+import api from '../../services/api';
 
 const UserDashboard = () => {
+    const [documents, setDocuments] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const response = await api.get('/documents/my');
+                setDocuments(response.data || []);
+            } catch (error) {
+                console.error("Error fetching dashboard data", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchDashboardData();
+    }, []);
+
+    const totalCount = documents.length;
+    const pendingCount = documents.filter(d => d.status === 'PENDING_ADMIN' || d.status === 'FORWARDED_TO_SUPERADMIN').length;
+    const approvedCount = documents.filter(d => d.status === 'VERIFIED').length;
+    const rejectedCount = documents.filter(d => d.status === 'REJECTED').length;
+
+    const stats = [
+        { title: "Total Documents", value: totalCount.toString(), icon: FileText, color: "text-blue-500", bg: "bg-blue-50" },
+        { title: "Pending", value: pendingCount.toString(), icon: Clock3, color: "text-yellow-500", bg: "bg-yellow-50" },
+        { title: "Approved", value: approvedCount.toString(), icon: CheckCircle, color: "text-green-500", bg: "bg-green-50" },
+        { title: "Rejected", value: rejectedCount.toString(), icon: XCircle, color: "text-red-500", bg: "bg-red-50" },
+    ];
+
+    const recentDocs = [...documents].reverse().slice(0, 5);
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl flex justify-between items-center relative overflow-hidden">
@@ -41,7 +59,9 @@ const UserDashboard = () => {
                             </div>
                             <div>
                                 <p className="text-sm text-slate-500 font-medium">{stat.title}</p>
-                                <h3 className="text-2xl font-bold text-slate-800">{stat.value}</h3>
+                                <h3 className="text-2xl font-bold text-slate-800">
+                                    {isLoading ? "..." : stat.value}
+                                </h3>
                             </div>
                         </CardContent>
                     </Card>
@@ -52,29 +72,37 @@ const UserDashboard = () => {
                 <Card className="lg:col-span-2">
                     <CardHeader title="Recent Documents" subtitle="Your recently uploaded files" />
                     <CardContent className="p-0">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
-                                <tr>
-                                    <th className="px-6 py-4 font-medium">Document Name</th>
-                                    <th className="px-6 py-4 font-medium">Category</th>
-                                    <th className="px-6 py-4 font-medium">Date</th>
-                                    <th className="px-6 py-4 font-medium">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {recentDocs.map(doc => (
-                                    <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 flex items-center gap-3">
-                                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><File size={16}/></div>
-                                            <span className="font-medium text-slate-700">{doc.name}</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-500">{doc.category}</td>
-                                        <td className="px-6 py-4 text-slate-500">{doc.date}</td>
-                                        <td className="px-6 py-4"><Badge status={doc.status}/></td>
+                        {isLoading ? (
+                            <div className="p-8 text-center text-slate-500">Loading documents...</div>
+                        ) : recentDocs.length === 0 ? (
+                            <div className="p-8 text-center text-slate-500">No documents found. Upload a document to get started.</div>
+                        ) : (
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
+                                    <tr>
+                                        <th className="px-6 py-4 font-medium">Document Name</th>
+                                        <th className="px-6 py-4 font-medium">Category</th>
+                                        <th className="px-6 py-4 font-medium">Date</th>
+                                        <th className="px-6 py-4 font-medium">Status</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {recentDocs.map(doc => (
+                                        <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4 flex items-center gap-3">
+                                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><File size={16}/></div>
+                                                <span className="font-medium text-slate-700">{doc.documentName || doc.name}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-500">{doc.documentType || doc.category}</td>
+                                            <td className="px-6 py-4 text-slate-500">
+                                                {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : doc.date}
+                                            </td>
+                                            <td className="px-6 py-4"><Badge status={doc.status}/></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -83,7 +111,7 @@ const UserDashboard = () => {
                     <CardContent className="flex flex-col gap-3">
                         <Link to="/user/upload" className="w-full flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition font-medium text-slate-700"><Upload size={20} className="text-slate-400"/> Upload New Document</Link>
                         <Link to="/user/my-documents" className="w-full flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition font-medium text-slate-700"><FileText size={20} className="text-slate-400"/> View All Documents</Link>
-                        <Link to="/user/pending" className="w-full flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition font-medium text-slate-700"><Clock3 size={20} className="text-slate-400"/> Check Pending Status</Link>
+                        <Link to="/user/my-documents" className="w-full flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition font-medium text-slate-700"><Clock3 size={20} className="text-slate-400"/> Check Pending Status</Link>
                     </CardContent>
                 </Card>
             </div>
