@@ -173,7 +173,7 @@ const Upload = () => {
             const message = error.response?.data?.message || '';
             if (message.includes("Free plan limit")) {
                 setShowUpgradeModal(true);
-                setErrorMsg("You have reached your 10 document free limit.");
+                setErrorMsg(""); // Clear error message since modal handles it
             } else {
                 setErrorMsg(message || 'Failed to upload document. Please try again.');
             }
@@ -510,7 +510,7 @@ const Upload = () => {
                                     <ShieldCheck size={32} />
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-800 mb-3">Upgrade to Premium</h3>
-                                <p className="text-slate-500 mb-8">You have reached the free limit of 10 documents. Upgrade to Premium for ₹99 to get lifetime unlimited uploads and priority verification!</p>
+                                <p className="text-slate-500 mb-8">You have reached the free limit of 5 documents. Upgrade to Premium for ₹99 to get lifetime unlimited uploads and priority verification!</p>
                                 
                                 <div className="space-y-4">
                                     <button onClick={handleUpgrade} className="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200">

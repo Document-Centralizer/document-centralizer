@@ -504,7 +504,7 @@ const Profile = () => {
                                         <span className="flex items-center gap-1.5 text-slate-700 text-xs font-bold uppercase"><User size={12}/> Free Plan</span>
                                         <span className="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">Current</span>
                                     </div>
-                                    <p className="text-xl font-black text-slate-800">Max 10 Documents</p>
+                                    <p className="text-xl font-black text-slate-800">Max 5 Documents</p>
                                     <p className="text-xs text-slate-500 mt-1">Upgrade for unlimited access</p>
                                     <button onClick={handleUpgrade} className="w-full mt-4 bg-slate-900 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition">
                                         Upgrade Now - ₹99

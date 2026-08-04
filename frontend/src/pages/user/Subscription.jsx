@@ -132,7 +132,7 @@ const Subscription = () => {
             price: "₹0",
             cycle: "Forever",
             badge: null,
-            features: ["10 Document Uploads", "Basic Verification", "Limited Sharing"],
+            features: ["5 Document Uploads", "Basic Verification", "Limited Sharing"],
             cta: userData.isPremium ? "Downgrade (Not Available)" : "Current Plan",
             highlight: false,
             isCurrent: !userData.isPremium,
@@ -199,7 +199,7 @@ const Subscription = () => {
                                 {userData.isPremium ? 'Lifetime Access' : 'Limited Access'}
                             </h2>
                             <p className={`text-sm mt-2 ${userData.isPremium ? 'text-slate-300' : 'text-slate-500'}`}>
-                                {userData.isPremium ? 'You have unlimited document uploads unlocked.' : 'You can upload up to 10 documents max.'}
+                                {userData.isPremium ? 'You have unlimited document uploads unlocked.' : 'You can upload up to 5 documents max.'}
                             </p>
                         </div>
                         <span className={`text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${userData.isPremium ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-700'}`}>
