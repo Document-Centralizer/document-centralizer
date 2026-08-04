@@ -1,17 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SubscriptionCard from "../../../components/admin/SubscriptionCard";
-import { subscriptionPlans, subscribedUsersData } from "../../../data/adminDashboardData";
+import api from "../../../services/api";
 
 export default function SubscriptionsSection() {
     const [selectedPlan, setSelectedPlan] = useState(null);
+    const [stats, setStats] = useState({ basic: 0, pro: 0 });
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSubscriptions = async () => {
+            try {
+                const response = await api.get('/admin/subscriptions');
+                const data = response.data;
+                setStats({
+                    basic: data.basicCount,
+                    pro: data.proCount
+                });
+                
+                // Map API users to match expected format
+                const mappedUsers = data.subscribedUsers.map(u => ({
+                    id: u.id,
+                    name: `${u.firstName} ${u.lastName}`,
+                    email: u.email,
+                    plan: u.subscriptionPlan || "Basic",
+                    date: "Active" // Default to active since we don't have a subscribe date right now
+                }));
+                setUsers(mappedUsers);
+            } catch (error) {
+                console.error("Failed to fetch subscriptions:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSubscriptions();
+    }, []);
 
     const handleManagePlan = (planName) => {
         setSelectedPlan(selectedPlan === planName ? null : planName);
     };
 
     const displayUsers = selectedPlan 
-        ? subscribedUsersData.filter(u => u.plan === selectedPlan)
-        : subscribedUsersData;
+        ? users.filter(u => u.plan === selectedPlan)
+        : users;
+
+    const dynamicSubscriptionPlans = [
+        { name: "Basic", price: "Free", users: stats.basic, features: ["Up to 10 Documents", "Standard Support", "Basic Analytics"] },
+        { name: "Pro", price: "₹99/mo", users: stats.pro, features: ["Unlimited Documents", "Priority Support", "Advanced Analytics", "Custom Categories"], recommended: true }
+    ];
 
     return (
         <div className="animate-in fade-in duration-300">
@@ -27,8 +63,8 @@ export default function SubscriptionsSection() {
                 )}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                {subscriptionPlans.map(plan => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 max-w-4xl mx-auto">
+                {dynamicSubscriptionPlans.map(plan => (
                     <SubscriptionCard 
                         key={plan.name} 
                         plan={plan} 
@@ -59,7 +95,6 @@ export default function SubscriptionsSection() {
                                     <td className="px-6 py-4 text-gray-500">{user.email}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                            user.plan === 'Enterprise' ? 'bg-purple-100 text-purple-700' : 
                                             user.plan === 'Pro' ? 'bg-blue-100 text-blue-700' :
                                             'bg-slate-100 text-slate-700'
                                         }`}>

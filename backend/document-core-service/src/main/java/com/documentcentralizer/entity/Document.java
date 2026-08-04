@@ -75,6 +75,10 @@ public class Document extends BaseEntity {
     @Schema(description = "OCR extracted text from the document")
     private String ocrText;
 
+    @Column
+    @Schema(description = "Confidence score of the OCR extraction", example = "0.95")
+    private Double ocrConfidenceScore;
+
     @Column(nullable = false)
     @Schema(description = "Soft delete flag", example = "false")
     private Boolean isDeleted = false;

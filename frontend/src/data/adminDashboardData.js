@@ -1,14 +1,14 @@
 import { Users, FileText, CheckCircle, Clock3, ShieldCheck, Database, CreditCard, BarChart, FileSearch, XCircle, LayoutDashboard, UserCircle } from "lucide-react";
 
 export const tabs = [
-    "Dashboard", "Users", "Documents", "Categories", "Subscriptions", "Reports", "Profile"
+    "Dashboard", "Users", "Documents", "Subscriptions", "Reports", "Profile"
 ];
 
 export const stats = [
-    { title: "Total Users", value: "1,248", icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
-    { title: "Documents Stored", value: "8,432", icon: Database, color: "text-slate-600", bg: "bg-slate-200" },
-    { title: "Total Categories", value: "7", icon: FileSearch, color: "text-purple-600", bg: "bg-purple-100" },
-    { title: "Storage Used", value: "428 GB", icon: ShieldCheck, color: "text-green-600", bg: "bg-green-100" },
+    { title: "Total Users", value: "0", icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
+    { title: "Documents Stored", value: "0", icon: Database, color: "text-slate-600", bg: "bg-slate-200" },
+    { title: "Verified Documents", value: "0", icon: CheckCircle, color: "text-green-600", bg: "bg-green-100" },
+    { title: "Pending Documents", value: "0", icon: Clock3, color: "text-yellow-600", bg: "bg-yellow-100" },
 ];
 
 export const recentActivities = [
@@ -52,43 +52,11 @@ export const categoriesData = [
     "Finance", "Legal", "Human Resources", "Engineering", "Marketing", "Personal", "Medical"
 ];
 
-export const subscriptionPlans = [
-    {name: "Basic", price: "Free", users: "1,024 Active", color: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200"},
-    {name: "Pro", price: "$9.99/mo", users: "432 Active", color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200"},
-    {name: "Enterprise", price: "$49.99/mo", users: "89 Active", color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200"}
-];
-
-export const subscribedUsersData = [
-    { id: 1, name: "Alice Smith", email: "alice@example.com", plan: "Basic", date: "2026-07-26" },
-    { id: 2, name: "Bob Johnson", email: "bob@example.com", plan: "Pro", date: "2026-07-25" },
-    { id: 3, name: "Charlie Brown", email: "charlie@example.com", plan: "Enterprise", date: "2026-07-20" },
-    { id: 4, name: "David Lee", email: "david@example.com", plan: "Basic", date: "2026-07-27" },
-    { id: 5, name: "Eve Adams", email: "eve@example.com", plan: "Pro", date: "2026-07-15" },
-];
+// Removed subscriptionPlans and subscribedUsersData since they are now fetched from the backend API
 
 export const reportsData = [
     { id: "users", title: "User Growth Report", desc: "View monthly user acquisition metrics", icon: BarChart, color: "text-blue-500", bg: "bg-blue-50", textBtn: "text-blue-700", hoverBtn: "hover:bg-blue-100" },
-    { id: "subscriptions", title: "Subscriptions Growth Report", desc: "View subscription tier upgrades and growth", icon: CreditCard, color: "text-purple-500", bg: "bg-purple-50", textBtn: "text-purple-700", hoverBtn: "hover:bg-purple-100" }
-];
-
-export const userGrowthData = [
-    { month: "Jan", users: 120 },
-    { month: "Feb", users: 150 },
-    { month: "Mar", users: 200 },
-    { month: "Apr", users: 280 },
-    { month: "May", users: 400 },
-    { month: "Jun", users: 650 },
-    { month: "Jul", users: 850 },
-];
-
-export const subscriptionsGrowthData = [
-    { month: "Jan", basic: 100, pro: 20, enterprise: 0 },
-    { month: "Feb", basic: 120, pro: 30, enterprise: 0 },
-    { month: "Mar", basic: 150, pro: 50, enterprise: 0 },
-    { month: "Apr", basic: 200, pro: 80, enterprise: 0 },
-    { month: "May", basic: 300, pro: 100, enterprise: 5 },
-    { month: "Jun", basic: 450, pro: 200, enterprise: 10 },
-    { month: "Jul", basic: 500, pro: 350, enterprise: 25 },
+    { id: "subscriptions", title: "Subscription Trends", desc: "Analyze subscription plan upgrades", icon: FileSearch, color: "text-purple-500", bg: "bg-purple-50", textBtn: "text-purple-700", hoverBtn: "hover:bg-purple-100" }
 ];
 
 export const tabIcons = {

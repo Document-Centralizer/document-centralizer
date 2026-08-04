@@ -47,6 +47,9 @@ public class User extends BaseEntity implements UserDetails {
     // Determines if the user has a paid premium subscription
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean isPremium = false;
+
+    @Column(nullable = false, length = 20)
+    private String subscriptionPlan = "Basic";
     @Column(length = 50, unique = true)
     private String username;
 

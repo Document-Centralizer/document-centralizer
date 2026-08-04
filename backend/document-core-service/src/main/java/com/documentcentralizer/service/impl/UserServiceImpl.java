@@ -17,6 +17,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final com.documentcentralizer.service.S3Service s3Service;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
 
     @Override
@@ -78,5 +79,59 @@ public class UserServiceImpl implements UserService {
         }
         
         return s3Service.downloadFile(user.getProfileImageUrl());
+    }
+
+    @Override
+    public java.util.List<UserProfileDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> modelMapper.map(user, UserProfileDTO.class))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public void deleteUser(Long userId) {
+        if (userRepository.existsById(userId)) {
+            userRepository.deleteById(userId);
+        } else {
+            throw new RuntimeException("User not found with id: " + userId);
+        }
+    }
+
+    @Override
+    public com.documentcentralizer.dto.SubscriptionDashboardDTO getSubscriptionDashboardData() {
+        java.util.List<com.documentcentralizer.entity.User> users = userRepository.findAll();
+        
+        long basicCount = 0;
+        long proCount = 0;
+        
+        java.util.List<UserProfileDTO> subscribedUsers = new java.util.ArrayList<>();
+        
+        for (com.documentcentralizer.entity.User user : users) {
+            String plan = user.getSubscriptionPlan();
+            if (plan != null) {
+                if (plan.equalsIgnoreCase("Basic")) basicCount++;
+                else if (plan.equalsIgnoreCase("Pro")) proCount++;
+            }
+            subscribedUsers.add(modelMapper.map(user, UserProfileDTO.class));
+        }
+        
+        return com.documentcentralizer.dto.SubscriptionDashboardDTO.builder()
+                .basicCount(basicCount)
+                .proCount(proCount)
+                .subscribedUsers(subscribedUsers)
+                .build();
+    }
+
+    @Override
+    public void changePassword(Long userId, com.documentcentralizer.dto.ChangePasswordRequestDTO request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid current password");
+        }
+        
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 }

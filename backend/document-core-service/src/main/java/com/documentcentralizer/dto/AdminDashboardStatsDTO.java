@@ -13,4 +13,6 @@ public class AdminDashboardStatsDTO {
     private long pendingAdminDocuments;
     private long totalDocuments;
     private long verifiedDocuments;
+    private java.util.List<RecentActivityDTO> recentActivities;
+    private java.util.List<StorageBreakdownDTO> storageBreakdown;
 }

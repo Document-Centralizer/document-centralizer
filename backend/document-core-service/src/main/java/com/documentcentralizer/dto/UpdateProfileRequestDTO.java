@@ -13,6 +13,7 @@ public class UpdateProfileRequestDTO {
     private String city;
     private String state;
     private String country;
+    private String email;
     private String pincode;
     private String profileImageUrl;
 }

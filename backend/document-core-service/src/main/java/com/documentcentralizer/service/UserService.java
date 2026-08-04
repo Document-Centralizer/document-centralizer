@@ -32,4 +32,20 @@ public interface UserService {
      * @return Resource representing the image file
      */
     org.springframework.core.io.Resource downloadProfileImage(Long userId);
+
+    /**
+     * Retrieves all users.
+     * @return List of UserProfileDTO
+     */
+    java.util.List<UserProfileDTO> getAllUsers();
+
+    /**
+     * Deletes a user by ID.
+     * @param userId The ID of the user
+     */
+    void deleteUser(Long userId);
+
+    com.documentcentralizer.dto.SubscriptionDashboardDTO getSubscriptionDashboardData();
+
+    void changePassword(Long userId, com.documentcentralizer.dto.ChangePasswordRequestDTO request);
 }

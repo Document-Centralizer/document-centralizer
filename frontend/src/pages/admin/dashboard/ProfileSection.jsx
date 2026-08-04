@@ -23,26 +23,54 @@ export default function ProfileSection() {
         }
     }, [user]);
 
-    const handleSaveProfile = () => {
-        updateUser({ name: editName, email: editEmail });
-        setIsEditingProfile(false);
-        setMessage({ type: "success", text: "Profile updated successfully!" });
-        setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+    const handleSaveProfile = async () => {
+        try {
+            const nameParts = editName.split(" ");
+            const firstName = nameParts[0];
+            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+            
+            const { default: api } = await import('../../../services/api');
+            const response = await api.put('/users/profile', {
+                firstName,
+                lastName,
+                email: editEmail
+            });
+            
+            updateUser({ 
+                name: `${response.data.firstName} ${response.data.lastName}`, 
+                email: response.data.email 
+            });
+            
+            setIsEditingProfile(false);
+            setMessage({ type: "success", text: "Profile updated successfully!" });
+            setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+        } catch (error) {
+            setMessage({ type: "error", text: "Failed to update profile. Please try again." });
+        }
     };
 
-    const handleUpdatePassword = (e) => {
+    const handleUpdatePassword = async (e) => {
         e.preventDefault();
         if (newPassword !== confirmPassword) {
             setMessage({ type: "error", text: "New passwords do not match." });
             return;
         }
-        // Mock update password
-        setIsUpdatingPassword(false);
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setMessage({ type: "success", text: "Password updated successfully!" });
-        setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+        try {
+            const { default: api } = await import('../../../services/api');
+            await api.put('/users/password', {
+                currentPassword,
+                newPassword
+            });
+            setIsUpdatingPassword(false);
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            setMessage({ type: "success", text: "Password updated successfully!" });
+            setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+        } catch (error) {
+            const errMsg = error.response?.data?.error || "Failed to update password. Please check your current password.";
+            setMessage({ type: "error", text: errMsg });
+        }
     };
 
     if (!user) {

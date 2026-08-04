@@ -1,9 +1,70 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReportCard from "../../../components/admin/ReportCard";
-import { reportsData, userGrowthData, subscriptionsGrowthData } from "../../../data/adminDashboardData";
+import { reportsData } from "../../../data/adminDashboardData";
+import api from "../../../services/api";
 
 export default function ReportsSection() {
-    const [selectedReport, setSelectedReport] = useState(null);
+    const [selectedReport, setSelectedReport] = useState("users");
+    const [userGrowthData, setUserGrowthData] = useState([]);
+    const [subscriptionsGrowthData, setSubscriptionsGrowthData] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchReportsData = async () => {
+            try {
+                const response = await api.get('/admin/users');
+                const users = response.data;
+                
+                // Aggregate data by month (last 6 months)
+                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const now = new Date();
+                
+                let growth = [];
+                let subs = [];
+                
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const monthStr = monthNames[d.getMonth()];
+                    
+                    // Count users created up to or in this month
+                    // For simplicity, we just count users created in this specific month
+                    const usersInMonth = users.filter(u => {
+                        if (!u.createdAt) return false;
+                        const created = new Date(u.createdAt);
+                        return created.getMonth() === d.getMonth() && created.getFullYear() === d.getFullYear();
+                    });
+                    
+                    growth.push({
+                        month: monthStr,
+                        users: usersInMonth.length
+                    });
+                    
+                    let basic = 0;
+                    let pro = 0;
+                    usersInMonth.forEach(u => {
+                        if (u.subscriptionPlan === "Pro") pro++;
+                        else basic++;
+                    });
+                    
+                    subs.push({
+                        month: monthStr,
+                        basic,
+                        pro,
+                        enterprise: 0
+                    });
+                }
+                
+                setUserGrowthData(growth);
+                setSubscriptionsGrowthData(subs);
+                
+            } catch (error) {
+                console.error("Failed to fetch report data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchReportsData();
+    }, []);
 
     const handleSelectReport = (reportId) => {
         setSelectedReport(selectedReport === reportId ? null : reportId);
@@ -31,7 +92,8 @@ export default function ReportsSection() {
                     </div>
                     <div className="flex items-end gap-2 sm:gap-4 h-64 border-b border-gray-100 pb-2">
                         {userGrowthData.map((data, idx) => {
-                            const maxUsers = 1000; 
+                            // find max dynamically for the graph scale
+                            const maxUsers = Math.max(...userGrowthData.map(d => d.users), 10); 
                             const heightPercentage = (data.users / maxUsers) * 100;
                             return (
                                 <div key={idx} className="flex-1 flex flex-col items-center justify-end gap-2 group h-full">
@@ -45,7 +107,7 @@ export default function ReportsSection() {
                             )
                         })}
                     </div>
-                    <div className="mt-4 text-center text-sm text-gray-500 font-medium">Total active users over the last 7 months</div>
+                    <div className="mt-4 text-center text-sm text-gray-500 font-medium">New users registered per month over the last 6 months</div>
                 </div>
             )}
 
@@ -63,7 +125,6 @@ export default function ReportsSection() {
                                     <th className="px-6 py-4">Month</th>
                                     <th className="px-6 py-4">Basic Plan</th>
                                     <th className="px-6 py-4">Pro Plan</th>
-                                    <th className="px-6 py-4">Enterprise Plan</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -72,7 +133,6 @@ export default function ReportsSection() {
                                         <td className="px-6 py-4 font-bold text-gray-800">{data.month}</td>
                                         <td className="px-6 py-4 text-slate-600 font-medium">{data.basic} users</td>
                                         <td className="px-6 py-4 text-blue-600 font-medium">{data.pro} users</td>
-                                        <td className="px-6 py-4 text-purple-600 font-medium">{data.enterprise} users</td>
                                     </tr>
                                 ))}
                             </tbody>

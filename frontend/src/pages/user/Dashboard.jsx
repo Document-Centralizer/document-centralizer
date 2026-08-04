@@ -7,13 +7,16 @@ import api from '../../services/api';
 
 const UserDashboard = () => {
     const [documents, setDocuments] = useState([]);
+    const [dashboardStats, setDashboardStats] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const response = await api.get('/documents/my');
-                setDocuments(response.data || []);
+                const docsResponse = await api.get('/documents/my');
+                setDocuments(docsResponse.data || []);
+                const statsResponse = await api.get('/users/dashboard');
+                setDashboardStats(statsResponse.data);
             } catch (error) {
                 console.error("Error fetching dashboard data", error);
             } finally {
@@ -23,16 +26,11 @@ const UserDashboard = () => {
         fetchDashboardData();
     }, []);
 
-    const totalCount = documents.length;
-    const pendingCount = documents.filter(d => d.status === 'PENDING_ADMIN' || d.status === 'FORWARDED_TO_SUPERADMIN').length;
-    const approvedCount = documents.filter(d => d.status === 'VERIFIED').length;
-    const rejectedCount = documents.filter(d => d.status === 'REJECTED').length;
-
     const stats = [
-        { title: "Total Documents", value: totalCount.toString(), icon: FileText, color: "text-blue-500", bg: "bg-blue-50" },
-        { title: "Pending", value: pendingCount.toString(), icon: Clock3, color: "text-yellow-500", bg: "bg-yellow-50" },
-        { title: "Approved", value: approvedCount.toString(), icon: CheckCircle, color: "text-green-500", bg: "bg-green-50" },
-        { title: "Rejected", value: rejectedCount.toString(), icon: XCircle, color: "text-red-500", bg: "bg-red-50" },
+        { title: "Total Documents", value: dashboardStats ? dashboardStats.totalDocuments.toString() : "0", icon: FileText, color: "text-blue-500", bg: "bg-blue-50" },
+        { title: "Pending", value: dashboardStats ? dashboardStats.pendingDocuments.toString() : "0", icon: Clock3, color: "text-yellow-500", bg: "bg-yellow-50" },
+        { title: "Approved", value: dashboardStats ? dashboardStats.approvedDocuments.toString() : "0", icon: CheckCircle, color: "text-green-500", bg: "bg-green-50" },
+        { title: "Rejected", value: dashboardStats ? dashboardStats.rejectedDocuments.toString() : "0", icon: XCircle, color: "text-red-500", bg: "bg-red-50" },
     ];
 
     const recentDocs = [...documents].reverse().slice(0, 5);

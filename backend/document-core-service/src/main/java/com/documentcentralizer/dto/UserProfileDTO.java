@@ -21,4 +21,6 @@ public class UserProfileDTO {
     private String profileImageUrl;
     private Role role;
     private Boolean isPremium;
+    private String subscriptionPlan;
+    private java.time.LocalDateTime createdAt;
 }

@@ -40,7 +40,6 @@ export default function DocumentsTable({ filter, documents, onReject, onForward,
                 <thead className="bg-slate-50 text-gray-600 font-semibold">
                     <tr>
                         <th className="px-6 py-4">Document Name</th>
-                        <th className="px-6 py-4">Category</th>
                         <th className="px-6 py-4">Owner</th>
                         <th className="px-6 py-4">Date</th>
                         <th className="px-6 py-4">State</th>
@@ -51,7 +50,6 @@ export default function DocumentsTable({ filter, documents, onReject, onForward,
                     {filteredDocs.length > 0 ? filteredDocs.map((doc) => (
                         <tr key={doc.id} className="hover:bg-slate-50 transition">
                             <td className="px-6 py-4 font-semibold text-gray-800">{doc.name}</td>
-                            <td className="px-6 py-4 text-gray-500 font-medium">{doc.category}</td>
                             <td className="px-6 py-4 text-gray-500">{doc.owner}</td>
                             <td className="px-6 py-4 text-gray-500">{doc.date}</td>
                             <td className="px-6 py-4">
@@ -103,7 +101,7 @@ export default function DocumentsTable({ filter, documents, onReject, onForward,
                         </tr>
                     )) : (
                         <tr>
-                            <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                            <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                                 No {filter !== "All" ? filter.toLowerCase() : ""} documents found.
                             </td>
                         </tr>
@@ -125,7 +123,6 @@ export default function DocumentsTable({ filter, documents, onReject, onForward,
                             <div className="space-y-4">
                                 <div className="space-y-2 text-sm text-gray-600 bg-gray-50 p-4 rounded-xl">
                                     <p><strong className="text-gray-800">Name:</strong> {viewDoc.name}</p>
-                                    <p><strong className="text-gray-800">Category:</strong> {viewDoc.category}</p>
                                     <p><strong className="text-gray-800">Owner:</strong> {viewDoc.owner}</p>
                                     <p><strong className="text-gray-800">Date:</strong> {viewDoc.date}</p>
                                     <p><strong className="text-gray-800">State:</strong> {viewDoc.state}</p>
@@ -134,7 +131,12 @@ export default function DocumentsTable({ filter, documents, onReject, onForward,
                                     )}
                                 </div>
                                 <div className="space-y-2">
-                                    <h4 className="font-semibold text-gray-800">OCR Extracted Text</h4>
+                                    <div className="flex justify-between items-center">
+                                        <h4 className="font-semibold text-gray-800">OCR Extracted Text</h4>
+                                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${viewDoc.ocrConfidenceScore != null ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                                            OCR Score: {viewDoc.ocrConfidenceScore != null ? viewDoc.ocrConfidenceScore.toFixed(2) : 'N/A'}
+                                        </span>
+                                    </div>
                                     <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm text-gray-700 h-48 overflow-y-auto whitespace-pre-wrap">
                                         {viewDoc.ocrText ? viewDoc.ocrText : <span className="text-gray-400 italic">No OCR text extracted yet.</span>}
                                     </div>

@@ -51,4 +51,11 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     // Find document by share slug
     java.util.Optional<Document> findByShareSlug(String shareSlug);
+
+    // Get latest 5 documents
+    List<Document> findTop5ByOrderByUploadedAtDesc();
+
+    // Get storage breakdown grouped by document type
+    @org.springframework.data.jpa.repository.Query("SELECT d.documentType, SUM(d.fileSize) FROM Document d GROUP BY d.documentType")
+    List<Object[]> getStorageBreakdown();
 }
