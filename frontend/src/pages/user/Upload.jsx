@@ -15,11 +15,7 @@ const CATEGORIES = [
     "Birth Certificate", "Income Certificate", "Caste Certificate", "Other"
 ];
 
-const RECENT_UPLOADS = [
-    { id: 1, name: "Aadhaar_Card.pdf", time: "2 mins ago", status: "Uploaded Successfully" },
-    { id: 2, name: "Degree_Certificate.pdf", time: "1 hour ago", status: "Pending Verification" },
-    { id: 3, name: "Passport.pdf", time: "3 hours ago", status: "Upload Failed" }
-];
+
 
 const Upload = () => {
     const [dragActive, setDragActive] = useState(false);
@@ -38,6 +34,26 @@ const Upload = () => {
         expiryDate: '',
         tags: ''
     });
+
+    const [recentDocuments, setRecentDocuments] = useState([]);
+    const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+
+    const fetchRecentDocuments = async () => {
+        try {
+            const { default: api } = await import('../../services/api');
+            const response = await api.get('/documents/my');
+            const docs = response.data || [];
+            setRecentDocuments(docs.reverse().slice(0, 3));
+        } catch (error) {
+            console.error("Error fetching recent documents", error);
+        } finally {
+            setIsLoadingRecent(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchRecentDocuments();
+    }, []);
 
     const handleDrag = (e) => {
         e.preventDefault();
@@ -146,6 +162,8 @@ const Upload = () => {
             });
 
             setUploadState('success');
+            fetchRecentDocuments(); // Refresh recent documents after upload
+
         } catch (error) {
             console.error('Upload failed:', error);
             setErrorMsg(error.response?.data?.message || 'Failed to upload document. Please try again.');
@@ -335,20 +353,28 @@ const Upload = () => {
                     <Card>
                         <CardHeader title="Recent Uploads" />
                         <CardContent className="pt-0 space-y-4">
-                            {RECENT_UPLOADS.map(doc => (
-                                <div key={doc.id} className="flex gap-3 items-start p-3 rounded-xl hover:bg-slate-50 transition cursor-pointer border border-transparent hover:border-slate-100">
-                                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                                        <FileText size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-slate-800 line-clamp-1">{doc.name}</p>
-                                        <p className="text-xs text-slate-400 mt-0.5">{doc.time}</p>
-                                        <div className="mt-1">
-                                            <Badge status={doc.status} />
+                            {isLoadingRecent ? (
+                                <div className="p-4 text-center text-slate-500 text-sm">Loading recent uploads...</div>
+                            ) : recentDocuments.length === 0 ? (
+                                <div className="p-4 text-center text-slate-500 text-sm">No recent uploads found.</div>
+                            ) : (
+                                recentDocuments.map(doc => (
+                                    <div key={doc.id} className="flex gap-3 items-start p-3 rounded-xl hover:bg-slate-50 transition cursor-pointer border border-transparent hover:border-slate-100">
+                                        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                                            <FileText size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-800 line-clamp-1">{doc.documentName || doc.name}</p>
+                                            <p className="text-xs text-slate-400 mt-0.5">
+                                                {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'Recently'}
+                                            </p>
+                                            <div className="mt-1">
+                                                <Badge status={doc.status} />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </CardContent>
                     </Card>
 
