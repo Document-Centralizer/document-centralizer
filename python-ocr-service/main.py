@@ -11,19 +11,28 @@ def read_root():
 
 @app.post("/extract")
 async def extract_text(file: UploadFile = File(...)):
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File provided is not an image")
-    
     try:
         contents = await file.read()
-        image = Image.open(io.BytesIO(contents))
         
-        # Extract text using pytesseract
-        text = pytesseract.image_to_string(image)
+        text = ""
+        # Check if PDF by looking for magic bytes
+        if contents.startswith(b'%PDF'):
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(contents))
+            for page in reader.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text += extracted + "\n"
+        else:
+            image = Image.open(io.BytesIO(contents))
+            # Extract text using pytesseract
+            text = pytesseract.image_to_string(image)
         
         return {
             "filename": file.filename,
             "extracted_text": text.strip()
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
