@@ -55,10 +55,9 @@ public class DocumentServiceImpl implements DocumentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        // 2. Check Subscription Limits
         if (!Boolean.TRUE.equals(user.getIsPremium())) {
             long totalCount = documentRepository.countByUserId(userId);
-            if (totalCount >= 10) {
+            if (totalCount >= 5) {
                 throw new RuntimeException(
                         "Free plan limit exceeded. Please upgrade to a Premium subscription to store more documents.");
             }
