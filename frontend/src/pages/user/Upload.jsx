@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const CATEGORIES = [
     "Aadhaar Card", "PAN Card", "Passport", "Driving License", 
@@ -23,6 +24,7 @@ const Upload = () => {
     const [uploadState, setUploadState] = useState('idle'); // idle, confirming, uploading, success, error
     const [progress, setProgress] = useState(0);
     const [errorMsg, setErrorMsg] = useState('');
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const inputRef = useRef(null);
 
     // Form State
@@ -166,9 +168,84 @@ const Upload = () => {
 
         } catch (error) {
             console.error('Upload failed:', error);
-            setErrorMsg(error.response?.data?.message || 'Failed to upload document. Please try again.');
+            
+            // Intercept limit exceeded error to show Upgrade Modal
+            const message = error.response?.data?.message || '';
+            if (message.includes("Free plan limit")) {
+                setShowUpgradeModal(true);
+                setErrorMsg(""); // Clear error message since modal handles it
+            } else {
+                setErrorMsg(message || 'Failed to upload document. Please try again.');
+            }
+            
             setUploadState('idle');
             setProgress(0);
+        }
+    };
+
+    const loadRazorpay = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handleUpgrade = async () => {
+        const res = await loadRazorpay();
+        if (!res) {
+            toast.error("Razorpay SDK failed to load. Are you online?");
+            return;
+        }
+
+        try {
+            const { default: api } = await import('../../services/api');
+            
+            // 1. Create Order on Backend
+            const orderRes = await api.post('/payment/create-order');
+            
+            // 2. Configure Razorpay Options
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Frontend .env key
+                amount: orderRes.data.amount,
+                currency: orderRes.data.currency,
+                name: "Document Centralizer",
+                description: "Lifetime Premium Subscription",
+                order_id: orderRes.data.orderId,
+                handler: async function (response) {
+                    try {
+                        // 3. Verify Payment on Backend
+                        const verifyRes = await api.post('/payment/verify', {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+                        
+                        if (verifyRes.data.status === "SUCCESS") {
+                            toast.success("Welcome to Premium! You now have unlimited uploads.");
+                            setShowUpgradeModal(false);
+                        }
+                    } catch (err) {
+                        toast.error("Payment verification failed.");
+                    }
+                },
+                prefill: {
+                    name: "User",
+                    email: "user@example.com",
+                },
+                theme: {
+                    color: "#3399cc"
+                }
+            };
+            
+            // 3. Open Razorpay Checkout
+            const paymentObject = new window.Razorpay(options);
+            paymentObject.open();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to initialize payment. Try again.");
         }
     };
 
@@ -410,6 +487,37 @@ const Upload = () => {
                                     </button>
                                     <button onClick={startUpload} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 transition shadow-md shadow-blue-200">
                                         Confirm
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Upgrade Modal */}
+            <AnimatePresence>
+                {showUpgradeModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                        >
+                            <div className="p-8 text-center">
+                                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <ShieldCheck size={32} />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-800 mb-3">Upgrade to Premium</h3>
+                                <p className="text-slate-500 mb-8">You have reached the free limit of 5 documents. Upgrade to Premium for ₹99 to get lifetime unlimited uploads and priority verification!</p>
+                                
+                                <div className="space-y-4">
+                                    <button onClick={handleUpgrade} className="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200">
+                                        Pay ₹99 Now
+                                    </button>
+                                    <button onClick={() => setShowUpgradeModal(false)} className="w-full bg-white text-slate-500 py-3 rounded-xl font-medium hover:bg-slate-50 transition">
+                                        Cancel
                                     </button>
                                 </div>
                             </div>

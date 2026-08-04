@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
+import toast from 'react-hot-toast';
 import api from '../../services/api';
 
 
@@ -182,6 +183,8 @@ const Profile = () => {
                 ...data,
                 fullName: `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.username || 'User',
                 userId: `USR-2026-${data.id || '0000'}`,
+                isPremium: data.isPremium,
+                plan: data.isPremium ? "Premium" : "Free Plan",
                 location: data.city || data.state ? `${data.city || ''}, ${data.state || ''}`.replace(/^, |^,$/, '') : 'No location added',
                 avatarInitials: data.firstName ? data.firstName[0].toUpperCase() : (data.username ? data.username[0].toUpperCase() : "U"),
                 completeness: completeness,
@@ -234,6 +237,72 @@ const Profile = () => {
                 alert("Failed to upload profile image.");
                 setPhoto(null);
             }
+        }
+    };
+
+    const loadRazorpay = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handleUpgrade = async () => {
+        const res = await loadRazorpay();
+        if (!res) {
+            toast.error("Razorpay SDK failed to load. Are you online?");
+            return;
+        }
+
+        try {
+            const { default: api } = await import('../../services/api');
+            
+            // 1. Create Order on Backend
+            const orderRes = await api.post('/payment/create-order');
+            
+            // 2. Configure Razorpay Options
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Frontend .env key
+                amount: orderRes.data.amount,
+                currency: orderRes.data.currency,
+                name: "Document Centralizer",
+                description: "Lifetime Premium Subscription",
+                order_id: orderRes.data.orderId,
+                handler: async function (response) {
+                    try {
+                        // 3. Verify Payment on Backend
+                        const verifyRes = await api.post('/payment/verify', {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+                        
+                        if (verifyRes.data.status === "SUCCESS") {
+                            toast.success("Welcome to Premium! You now have unlimited uploads.");
+                            fetchProfile(); // Refresh profile to show Premium UI
+                        }
+                    } catch (err) {
+                        toast.error("Payment verification failed.");
+                    }
+                },
+                prefill: {
+                    name: userData?.fullName || "User",
+                    email: userData?.email || "user@example.com",
+                },
+                theme: {
+                    color: "#3399cc"
+                }
+            };
+            
+            // 3. Open Razorpay Checkout
+            const paymentObject = new window.Razorpay(options);
+            paymentObject.open();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to initialize payment. Try again.");
         }
     };
 
@@ -291,6 +360,14 @@ const Profile = () => {
                         <div className="flex-1 pt-4 md:pt-0">
                             <div className="flex flex-wrap items-center gap-3 mb-1">
                                 <h2 className="text-2xl font-black text-slate-800">{userData.fullName}</h2>
+                                <span className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                    <ShieldCheck size={12}/> Verified
+                                </span>
+                                {userData.isPremium && (
+                                    <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 border border-yellow-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                        <Star size={12}/> Premium
+                                    </span>
+                                )}
                             </div>
                             <p className="text-slate-500 text-sm">{userData.email}</p>
                             <div className="flex flex-wrap gap-6 mt-4 text-sm text-slate-500">
@@ -408,6 +485,34 @@ const Profile = () => {
                     </Card>
 
 
+                    {/* Subscription Card */}
+                    <Card>
+                        <CardHeader title="Subscription" />
+                        <CardContent className="pt-0 space-y-4">
+                            {userData.isPremium ? (
+                                <div className="bg-slate-900 rounded-xl p-4 text-white">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="flex items-center gap-1.5 text-yellow-400 text-xs font-bold uppercase"><Star size={12}/> Premium</span>
+                                        <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Active</span>
+                                    </div>
+                                    <p className="text-xl font-black">Lifetime Access</p>
+                                    <p className="text-xs text-slate-400 mt-1">Unlimited uploads unlocked</p>
+                                </div>
+                            ) : (
+                                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="flex items-center gap-1.5 text-slate-700 text-xs font-bold uppercase"><User size={12}/> Free Plan</span>
+                                        <span className="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">Current</span>
+                                    </div>
+                                    <p className="text-xl font-black text-slate-800">Max 5 Documents</p>
+                                    <p className="text-xs text-slate-500 mt-1">Upgrade for unlimited access</p>
+                                    <button onClick={handleUpgrade} className="w-full mt-4 bg-slate-900 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition">
+                                        Upgrade Now - ₹99
+                                    </button>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     {/* Quick Actions */}
                     <Card>
