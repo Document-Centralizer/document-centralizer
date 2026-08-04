@@ -49,8 +49,14 @@ public class DocumentResponseDTO {
     @Schema(description = "OCR extracted text from the document")
     private String ocrText;
 
+    @Schema(description = "Confidence score of the OCR extraction", example = "0.95")
+    private Double ocrConfidenceScore;
+
     @Schema(description = "ID of the user who uploaded the document", example = "5")
     private Long userId;
+
+    @Schema(description = "Name of the user who uploaded the document", example = "John Doe")
+    private String ownerName;
 
     @Schema(description = "Admin remarks", example = "Approved after review")
     private String adminRemark;

@@ -54,8 +54,32 @@ public class AdminController {
 
 
 
+    @PutMapping("/documents/{id}/verify-authbridge")
+    public ResponseEntity<DocumentResponseDTO> verifyDocumentAuthBridge(@PathVariable Long id) {
+        DocumentResponseDTO verifiedDocument = documentService.changeVerificationStatus(id, "VERIFIED", null);
+        return ResponseEntity.ok(verifiedDocument);
+    }
+
     @GetMapping("/dashboard")
     public ResponseEntity<com.documentcentralizer.dto.AdminDashboardStatsDTO> getDashboard() {
         return ResponseEntity.ok(documentService.getAdminDashboardStats());
+    }
+
+    private final com.documentcentralizer.service.UserService userService;
+
+    @GetMapping("/users")
+    public ResponseEntity<List<com.documentcentralizer.dto.UserProfileDTO>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/subscriptions")
+    public ResponseEntity<com.documentcentralizer.dto.SubscriptionDashboardDTO> getSubscriptions() {
+        return ResponseEntity.ok(userService.getSubscriptionDashboardData());
     }
 }

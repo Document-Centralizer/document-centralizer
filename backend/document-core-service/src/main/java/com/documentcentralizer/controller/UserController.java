@@ -61,6 +61,19 @@ public class UserController {
         return ResponseEntity.ok(updatedProfile);
     }
 
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(
+            Authentication authentication,
+            @RequestBody com.documentcentralizer.dto.ChangePasswordRequestDTO request) {
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            userService.changePassword(userId, request);
+            return ResponseEntity.ok(java.util.Map.of("message", "Password updated successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/profile/image/{userId}")
     public ResponseEntity<org.springframework.core.io.Resource> getProfileImage(@PathVariable Long userId) {
         org.springframework.core.io.Resource resource = userService.downloadProfileImage(userId);

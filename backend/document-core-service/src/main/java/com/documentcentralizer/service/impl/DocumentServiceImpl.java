@@ -40,6 +40,7 @@ public class DocumentServiceImpl implements DocumentService {
         DocumentResponseDTO dto = modelMapper.map(document, DocumentResponseDTO.class);
         if (document.getUser() != null) {
             dto.setUserId(document.getUser().getId());
+            dto.setOwnerName(document.getUser().getFirstName() + " " + document.getUser().getLastName());
         }
         return dto;
     }
@@ -97,7 +98,8 @@ public class DocumentServiceImpl implements DocumentService {
             OcrResponse ocrResponse = ocrClient.processDocument(ocrRequest);
             if (ocrResponse != null && ocrResponse.getExtractedText() != null) {
                 savedDocument.setOcrText(ocrResponse.getExtractedText());
-                savedDocument = documentRepository.save(savedDocument);
+                savedDocument.setOcrConfidenceScore(ocrResponse.getConfidenceScore());
+                documentRepository.save(savedDocument);
             }
         } catch (Exception e) {
             System.err.println("Failed to process OCR during document upload: " + e.getMessage());
@@ -276,10 +278,55 @@ public class DocumentServiceImpl implements DocumentService {
         long totalDocs = documentRepository.count();
         long verifiedDocs = documentRepository.countByVerificationStatus("VERIFIED");
 
+        // Fetch Recent Activities
+        List<com.documentcentralizer.dto.RecentActivityDTO> recentActivities = documentRepository.findTop5ByOrderByUploadedAtDesc().stream()
+            .map(doc -> com.documentcentralizer.dto.RecentActivityDTO.builder()
+                .action("Document Uploaded")
+                .desc(doc.getOriginalFileName())
+                .time(doc.getUploadedAt().toString()) // Frontend can parse this or we can format it
+                .icon("FileText") // Matches lucide-react icon name in frontend
+                .bg("bg-blue-100")
+                .color("text-blue-600")
+                .build())
+            .toList();
+
+        // Fetch Storage Breakdown
+        List<Object[]> rawStorage = documentRepository.getStorageBreakdown();
+        long totalBytes = rawStorage.stream().mapToLong(row -> (Long) row[1]).sum();
+        
+        List<com.documentcentralizer.dto.StorageBreakdownDTO> storageBreakdown = rawStorage.stream().map(row -> {
+            String type = (String) row[0];
+            long size = (Long) row[1];
+            double percentage = totalBytes > 0 ? ((double) size / totalBytes) * 100 : 0;
+            
+            // Format size to MB or GB
+            String sizeStr;
+            if (size > 1024 * 1024 * 1024) {
+                sizeStr = String.format("%.1f GB", (double) size / (1024 * 1024 * 1024));
+            } else {
+                sizeStr = String.format("%.1f MB", (double) size / (1024 * 1024));
+            }
+
+            // Assign colors based on type
+            String color = "bg-gray-400";
+            if (type.equalsIgnoreCase("PDF")) color = "bg-blue-500";
+            else if (type.equalsIgnoreCase("RESUME") || type.equalsIgnoreCase("DOC")) color = "bg-green-500";
+            else if (type.equalsIgnoreCase("IMAGE") || type.equalsIgnoreCase("PHOTO")) color = "bg-purple-500";
+
+            return com.documentcentralizer.dto.StorageBreakdownDTO.builder()
+                .label(type)
+                .value(sizeStr)
+                .percentage(String.format("%.0f%%", percentage))
+                .color(color)
+                .build();
+        }).toList();
+
         return com.documentcentralizer.dto.AdminDashboardStatsDTO.builder()
                 .pendingAdminDocuments(pendingDocs)
                 .totalDocuments(totalDocs)
                 .verifiedDocuments(verifiedDocs)
+                .recentActivities(recentActivities)
+                .storageBreakdown(storageBreakdown)
                 .build();
     }
 

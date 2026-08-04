@@ -189,12 +189,21 @@ public class DocumentController {
         // 2. Fetch the document details to get its original name
         DocumentResponseDTO documentDetails = documentService.getDocumentById(id);
         
-        // 3. Prepare the HTTP header to tell the browser this is an attachment
-        String headerValue = "attachment; filename=\"" + documentDetails.getOriginalFileName() + "\"";
+        // 3. Prepare the HTTP header to tell the browser this is an inline file (so it renders in iframe)
+        String headerValue = "inline; filename=\"" + documentDetails.getOriginalFileName() + "\"";
+        
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        try {
+            if (documentDetails.getContentType() != null) {
+                mediaType = MediaType.parseMediaType(documentDetails.getContentType());
+            }
+        } catch (Exception e) {
+            // ignore and fallback to octet-stream
+        }
         
         // 4. Send the file to the user
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentType(mediaType)
                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, headerValue)
                 .body(resource);
     }

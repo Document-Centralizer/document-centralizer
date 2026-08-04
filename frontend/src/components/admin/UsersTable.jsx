@@ -1,13 +1,6 @@
-import React, { useState } from "react";
-import { usersData as initialUsersData } from "../../data/adminDashboardData";
+import React from "react";
 
-export default function UsersTable() {
-    const [users, setUsers] = useState(initialUsersData);
-
-    const handleRemoveUser = (email) => {
-        setUsers(users.filter(user => user.email !== email));
-    };
-
+export default function UsersTable({ users = [], onRemove }) {
     return (
         <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
             <table className="w-full text-left text-sm whitespace-nowrap">
@@ -35,7 +28,7 @@ export default function UsersTable() {
                             </td>
                             <td className="px-6 py-4 text-center">
                                 <button 
-                                    onClick={() => handleRemoveUser(user.email)} 
+                                    onClick={() => onRemove(user.id)} 
                                     className="text-red-600 hover:text-red-800 font-semibold transition"
                                 >
                                     Remove

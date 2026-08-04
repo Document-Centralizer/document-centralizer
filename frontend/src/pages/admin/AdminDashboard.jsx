@@ -3,7 +3,6 @@ import Sidebar from "../../components/admin/Sidebar";
 import DashboardOverview from "./dashboard/DashboardOverview";
 import UsersSection from "./dashboard/UsersSection";
 import DocumentsSection from "./dashboard/DocumentsSection";
-import CategoriesSection from "./dashboard/CategoriesSection";
 import SubscriptionsSection from "./dashboard/SubscriptionsSection";
 import ReportsSection from "./dashboard/ReportsSection";
 import ProfileSection from "./dashboard/ProfileSection";
@@ -20,7 +19,6 @@ export default function AdminDashboard() {
                 {activeTab === "Dashboard" && <DashboardOverview />}
                 {activeTab === "Users" && <UsersSection />}
                 {activeTab === "Documents" && <DocumentsSection />}
-                {activeTab === "Categories" && <CategoriesSection />}
                 {activeTab === "Subscriptions" && <SubscriptionsSection />}
                 {activeTab === "Reports" && <ReportsSection />}
                 {activeTab === "Profile" && <ProfileSection />}
