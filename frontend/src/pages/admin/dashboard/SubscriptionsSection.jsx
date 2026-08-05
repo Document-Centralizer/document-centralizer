@@ -23,7 +23,7 @@ export default function SubscriptionsSection() {
                     id: u.id,
                     name: `${u.firstName} ${u.lastName}`,
                     email: u.email,
-                    plan: u.subscriptionPlan || "Basic",
+                    plan: u.isPremium ? "Premium" : "Basic",
                     date: "Active" // Default to active since we don't have a subscribe date right now
                 }));
                 setUsers(mappedUsers);

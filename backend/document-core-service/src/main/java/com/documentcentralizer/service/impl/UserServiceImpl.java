@@ -107,13 +107,13 @@ public class UserServiceImpl implements UserService {
         java.util.List<UserProfileDTO> subscribedUsers = new java.util.ArrayList<>();
         
         for (com.documentcentralizer.entity.User user : users) {
-            if (user.getRole() == com.documentcentralizer.entity.Role.ADMIN) {
+            if (user.getRole() == com.documentcentralizer.entity.Role.ADMIN || user.getRole() == com.documentcentralizer.entity.Role.SUPER_ADMIN) {
                 continue;
             }
-            String plan = user.getSubscriptionPlan();
-            if (plan != null) {
-                if (plan.equalsIgnoreCase("Basic")) basicCount++;
-                else if (plan.equalsIgnoreCase("Premium")) premiumCount++;
+            if (Boolean.TRUE.equals(user.getIsPremium())) {
+                premiumCount++;
+            } else {
+                basicCount++;
             }
             subscribedUsers.add(modelMapper.map(user, UserProfileDTO.class));
         }
