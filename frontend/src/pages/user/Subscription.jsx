@@ -75,7 +75,7 @@ const Subscription = () => {
             
             // 2. Configure Razorpay Options
             const options = {
-                key: import.meta.env.VITE_RAZORPAY_KEY_ID, 
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_oFSgfunyJ7jrsA", 
                 amount: orderRes.data.amount,
                 currency: orderRes.data.currency,
                 name: "Document Centralizer",
@@ -101,6 +101,7 @@ const Subscription = () => {
                 prefill: {
                     name: userData?.firstName || "User",
                     email: userData?.email || "user@example.com",
+                    contact: userData?.mobileNumber || "9999999999"
                 },
                 theme: {
                     color: "#3399cc"
