@@ -20,7 +20,7 @@ const DocumentViewer = ({ docId }) => {
     }, [docId]);
 
     if (!docUrl) return <span className="text-gray-400">Loading document...</span>;
-    return <iframe src={docUrl} className="w-full h-full border-0" title="Document Viewer" />;
+    return <iframe src={`${docUrl}#toolbar=0`} className="w-full h-full border-0" title="Document Viewer" />;
 };
 
 export default function DocumentsTable({ filter, documents, onReject, onForward, onAuthBridgeVerify }) {

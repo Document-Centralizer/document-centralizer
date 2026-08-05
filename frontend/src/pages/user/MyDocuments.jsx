@@ -53,9 +53,6 @@ const ActionMenu = ({ doc, onPreview, onDownload }) => {
                         <button onClick={() => onPreview(doc)} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                             <Eye size={16} className="text-slate-400"/> Preview
                         </button>
-                        <button onClick={() => onDownload(doc.id, doc.fileName || doc.documentName)} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                            <Download size={16} className="text-slate-400"/> Download
-                        </button>
                         
                         {doc.status === 'VERIFIED' && (
                             <>
@@ -99,8 +96,44 @@ const ActionMenu = ({ doc, onPreview, onDownload }) => {
     );
 };
 
-const PreviewModal = ({ doc, onClose, onDownload }) => {
+const PreviewModal = ({ doc, onClose }) => {
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [fullDoc, setFullDoc] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let url = null;
+        const fetchDetails = async () => {
+            try {
+                // Fetch full metadata for remarks and file size
+                const metaRes = await api.get(`/documents/${doc.id}`);
+                setFullDoc(metaRes.data);
+
+                // Fetch file blob for preview
+                const fileRes = await api.get(`/documents/${doc.id}/download`, { responseType: 'blob' });
+                url = window.URL.createObjectURL(new Blob([fileRes.data], { type: fileRes.headers['content-type'] }));
+                setPreviewUrl(url);
+            } catch (error) {
+                console.error("Error loading preview", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDetails();
+
+        return () => {
+            if (url) window.URL.revokeObjectURL(url);
+        };
+    }, [doc.id]);
+
     if (!doc) return null;
+    
+    const displayDoc = fullDoc || doc;
+    const docName = displayDoc.documentName || displayDoc.name;
+    const docCategory = displayDoc.documentType || displayDoc.category;
+    const fileSize = fullDoc ? (fullDoc.fileSize ? (fullDoc.fileSize / 1024).toFixed(2) + ' KB' : 'N/A') : 'Loading...';
+    const status = displayDoc.status || displayDoc.verificationStatus;
+    
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
             <motion.div 
@@ -111,8 +144,8 @@ const PreviewModal = ({ doc, onClose, onDownload }) => {
             >
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-800">{doc.name}</h2>
-                        <p className="text-sm text-slate-500">{doc.category} • {doc.size}</p>
+                        <h2 className="text-lg font-bold text-slate-800">{docName}</h2>
+                        <p className="text-sm text-slate-500">{docCategory} • {fileSize}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
                         <XCircle size={24} />
@@ -120,9 +153,17 @@ const PreviewModal = ({ doc, onClose, onDownload }) => {
                 </div>
                 
                 <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                    <div className="flex-1 bg-slate-100 p-4 flex items-center justify-center overflow-auto">
-                        {/* Placeholder for actual PDF/Image viewer */}
-                        <img src={doc.previewUrl} alt={doc.name} className="max-w-full max-h-full object-contain rounded shadow-sm border border-slate-200" />
+                    <div className="flex-1 bg-slate-100 p-4 flex items-center justify-center overflow-auto relative">
+                        {loading ? (
+                            <div className="flex flex-col items-center gap-2">
+                                <RefreshCw className="animate-spin text-slate-400" size={32} />
+                                <p className="text-sm text-slate-500">Loading document...</p>
+                            </div>
+                        ) : previewUrl ? (
+                            <iframe src={`${previewUrl}#toolbar=0`} className="w-full h-full border-0 rounded bg-white shadow-sm" title="Preview" />
+                        ) : (
+                            <p className="text-sm text-slate-500">Preview not available.</p>
+                        )}
                     </div>
                     
                     <div className="w-full md:w-80 bg-white border-l border-slate-100 p-6 overflow-y-auto">
@@ -131,45 +172,40 @@ const PreviewModal = ({ doc, onClose, onDownload }) => {
                         <div className="space-y-4">
                             <div>
                                 <p className="text-xs text-slate-500 mb-1">Status</p>
-                                <Badge status={doc.status} />
+                                <Badge status={status} />
                             </div>
                             <div>
                                 <p className="text-xs text-slate-500 mb-1">Upload Date</p>
-                                <p className="text-sm font-medium text-slate-700">{doc.uploadDate}</p>
+                                <p className="text-sm font-medium text-slate-700">
+                                    {new Date(displayDoc.uploadedAt || displayDoc.uploadDate).toLocaleDateString()}
+                                </p>
                             </div>
-                            {doc.status !== 'Pending' && (
+                            {status !== 'PENDING_ADMIN' && (
                                 <>
                                     <div>
-                                        <p className="text-xs text-slate-500 mb-1">Verified By</p>
-                                        <p className="text-sm font-medium text-slate-700">{doc.verifiedBy}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Verification Date</p>
-                                        <p className="text-sm font-medium text-slate-700">{doc.verificationDate}</p>
-                                    </div>
-                                    <div>
                                         <p className="text-xs text-slate-500 mb-1">Remarks</p>
-                                        <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-100">{doc.remarks || "No remarks provided."}</p>
+                                        <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                            {displayDoc.adminRemark || displayDoc.remarks || displayDoc.rejectionReason || "No remarks provided."}
+                                        </p>
                                     </div>
                                 </>
                             )}
                         </div>
                         
                         <div className="mt-8 flex gap-3">
-                            <button onClick={() => onDownload(doc.id, doc.fileName || doc.documentName)} className="flex-1 bg-slate-900 text-white py-2 rounded-xl text-sm font-medium hover:bg-slate-800 transition">Download</button>
-                            {doc.status === 'VERIFIED' && (
+                            {status === 'VERIFIED' && (
                                 <button 
                                     onClick={() => {
-                                        if (doc.shareSlug) {
-                                            navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${doc.shareSlug}`);
+                                        if (displayDoc.shareSlug) {
+                                            navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${displayDoc.shareSlug}`);
                                             alert("Share link copied to clipboard!");
                                         } else {
                                             alert("Share link not available.");
                                         }
                                     }}
-                                    className="flex-1 border border-slate-200 text-slate-700 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition"
+                                    className="flex-1 border border-slate-200 text-slate-700 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition flex items-center justify-center gap-2"
                                 >
-                                    Copy Share Link
+                                    <Share2 size={16} /> Copy Share Link
                                 </button>
                             )}
                         </div>
@@ -191,7 +227,6 @@ const MyDocuments = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     const [documents, setDocuments] = useState([]);
-    const [activity, setActivity] = useState([]);
 
     useEffect(() => {
         const fetchDocuments = async () => {
@@ -334,9 +369,6 @@ const MyDocuments = () => {
                                         <LayoutGrid size={18} />
                                     </button>
                                 </div>
-                                <button className="hidden sm:flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
-                                    <Download size={16} /> Export
-                                </button>
                             </div>
                         </CardContent>
                     </Card>
@@ -402,13 +434,18 @@ const MyDocuments = () => {
                                                         <td className="px-6 py-4 text-right flex justify-end items-center gap-3">
                                                             <Badge status={doc.status} />
                                                             <div className="w-px h-4 bg-slate-200"></div>
-                                                            <button 
-                                                                onClick={() => handleDownload(doc.id, doc.fileName || doc.documentName)}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-xs font-medium transition-colors border border-blue-100"
-                                                                title="Download"
-                                                            >
-                                                                <Download size={14} /> Download
-                                                            </button>
+                                                            {doc.status === 'VERIFIED' && doc.shareSlug && (
+                                                                <button 
+                                                                    onClick={() => {
+                                                                        navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${doc.shareSlug}`);
+                                                                        alert("Share link copied to clipboard!");
+                                                                    }}
+                                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-xs font-medium transition-colors border border-blue-100"
+                                                                    title="Copy Link"
+                                                                >
+                                                                    <Share2 size={14} /> Share Link
+                                                                </button>
+                                                            )}
                                                             <ActionMenu doc={doc} onPreview={setPreviewDoc} onDownload={handleDownload} />
                                                         </td>
                                                     </motion.tr>
@@ -436,13 +473,18 @@ const MyDocuments = () => {
                                                     <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
                                                         <Badge status={doc.status} />
                                                         <div className="flex items-center gap-2">
-                                                            <button 
-                                                                onClick={() => handleDownload(doc.id, doc.fileName || doc.documentName)}
-                                                                className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition-colors border border-blue-100"
-                                                                title="Download"
-                                                            >
-                                                                <Download size={16} />
-                                                            </button>
+                                                            {doc.status === 'VERIFIED' && doc.shareSlug && (
+                                                                <button 
+                                                                    onClick={() => {
+                                                                        navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${doc.shareSlug}`);
+                                                                        alert("Share link copied to clipboard!");
+                                                                    }}
+                                                                    className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition-colors border border-blue-100"
+                                                                    title="Copy Link"
+                                                                >
+                                                                    <Share2 size={16} />
+                                                                </button>
+                                                            )}
                                                             <ActionMenu doc={doc} onPreview={setPreviewDoc} onDownload={handleDownload} />
                                                         </div>
                                                     </div>
@@ -454,39 +496,6 @@ const MyDocuments = () => {
                             )}
                         </>
                     )}
-                </div>
-
-                {/* Right Sidebar Activity */}
-                <div className="hidden xl:block w-80 shrink-0">
-                    <Card className="sticky top-24">
-                        <div className="px-6 py-5 border-b border-slate-100">
-                            <h3 className="font-semibold text-slate-800">Recent Activity</h3>
-                        </div>
-                        <CardContent className="p-6">
-                            <div className="space-y-6">
-                                {activity.map((act, i) => (
-                                    <div key={act.id} className="flex gap-4 relative">
-                                        {i !== activity.length - 1 && <div className="absolute left-4 top-8 bottom-[-24px] w-px bg-slate-100"></div>}
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 ${
-                                            act.type === 'upload' ? 'bg-blue-100 text-blue-600' :
-                                            act.type === 'approve' ? 'bg-green-100 text-green-600' :
-                                            act.type === 'reject' ? 'bg-red-100 text-red-600' : 'bg-purple-100 text-purple-600'
-                                        }`}>
-                                            {act.type === 'upload' && <Upload size={14} />}
-                                            {act.type === 'approve' && <CheckCircle size={14} />}
-                                            {act.type === 'reject' && <XCircle size={14} />}
-                                            {act.type === 'share' && <Share2 size={14} />}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-800">{act.action}</p>
-                                            <p className="text-xs text-slate-500 mt-1 line-clamp-1">{act.docName}</p>
-                                            <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">{act.time}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
                 </div>
 
             </div>

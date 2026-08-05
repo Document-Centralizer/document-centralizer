@@ -33,5 +33,22 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Default Admin created: admin@example.com / admin123");
             System.out.println("=========================================================");
         }
+
+        // Check if super admin already exists
+        if (!userRepository.existsByEmail("superadmin@example.com")) {
+            User superAdmin = new User();
+            superAdmin.setFirstName("System");
+            superAdmin.setLastName("SuperAdmin");
+            superAdmin.setEmail("superadmin@example.com");
+            superAdmin.setMobileNumber("0000000001");
+            superAdmin.setPassword(passwordEncoder.encode("superadmin123"));
+            superAdmin.setRole(Role.SUPER_ADMIN);
+            superAdmin.setEnabled(true);
+
+            userRepository.save(superAdmin);
+            System.out.println("=========================================================");
+            System.out.println("Default Super Admin created: superadmin@example.com / superadmin123");
+            System.out.println("=========================================================");
+        }
     }
 }

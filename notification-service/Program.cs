@@ -28,9 +28,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // AddScoped means a new instance is created once per HTTP request
 builder.Services.AddScoped<notification_service.Services.IEmailService, notification_service.Services.EmailService>();
 
-// Register our SMS Service Stub
-builder.Services.AddScoped<notification_service.Services.ISmsService, notification_service.Services.SmsService>();
-
 var app = builder.Build();
 
 // ==========================================
