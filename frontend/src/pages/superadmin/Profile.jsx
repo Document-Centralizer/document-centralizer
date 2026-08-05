@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { User, Mail, Phone, Shield, Key, Edit3, Save, X, CheckCircle } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import ToastContainer from './components/Toast';
@@ -8,13 +8,12 @@ const Profile = () => {
   const { user } = useContext(AuthContext);
   const { toasts, addToast, removeToast } = useToast();
 
-  // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: user?.name || 'Super Admin User',
-    email: user?.email || 'admin@docucentral.gov.in',
-    phone: '+91 98765 43210',
-    role: user?.role || 'superadmin',
+    name: 'Loading...',
+    email: 'loading...',
+    phone: '',
+    role: 'SUPER_ADMIN',
   });
   const [editData, setEditData] = useState({ ...profileData });
 
@@ -26,52 +25,85 @@ const Profile = () => {
   });
   const [passwordErrors, setPasswordErrors] = useState({});
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { default: api } = await import('../../services/api');
+        const res = await api.get('/users/profile');
+        const data = {
+          name: res.data.firstName + (res.data.lastName ? ' ' + res.data.lastName : ''),
+          email: res.data.email,
+          phone: res.data.phone || '+91 00000 00000',
+          role: res.data.role || 'SUPER_ADMIN'
+        };
+        setProfileData(data);
+        setEditData(data);
+      } catch (err) {
+        addToast('Failed to load profile', 'error');
+      }
+    };
+    fetchProfile();
+  }, []);
+
   const handleEditToggle = () => {
     if (isEditing) {
-      // Cancel editing
       setEditData({ ...profileData });
     }
     setIsEditing(!isEditing);
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!editData.name.trim() || !editData.email.trim()) {
       addToast('Name and email are required', 'error');
       return;
     }
-    setProfileData({ ...editData });
-    setIsEditing(false);
-    addToast('Profile updated successfully!', 'success');
+    try {
+      const { default: api } = await import('../../services/api');
+      const nameParts = editData.name.split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      
+      const payload = {
+        firstName,
+        lastName,
+        mobileNumber: editData.phone
+      };
+      await api.put('/users/profile', payload);
+      setProfileData({ ...editData });
+      setIsEditing(false);
+      addToast('Profile updated successfully!', 'success');
+    } catch (err) {
+      addToast('Failed to update profile', 'error');
+    }
   };
 
-  const handlePasswordUpdate = () => {
+  const handlePasswordUpdate = async () => {
     const errors = {};
-    
-    if (!passwords.current) {
-      errors.current = 'Current password is required';
-    }
-    if (!passwords.new) {
-      errors.new = 'New password is required';
-    } else if (passwords.new.length < 8) {
-      errors.new = 'Password must be at least 8 characters';
-    }
-    if (!passwords.confirm) {
-      errors.confirm = 'Please confirm your new password';
-    } else if (passwords.new !== passwords.confirm) {
-      errors.confirm = 'Passwords do not match';
-    }
+    if (!passwords.current) errors.current = 'Current password is required';
+    if (!passwords.new) errors.new = 'New password is required';
+    else if (passwords.new.length < 8) errors.new = 'Password must be at least 8 characters';
+    if (!passwords.confirm) errors.confirm = 'Please confirm your new password';
+    else if (passwords.new !== passwords.confirm) errors.confirm = 'Passwords do not match';
 
     setPasswordErrors(errors);
 
     if (Object.keys(errors).length === 0) {
-      // Simulate password update
-      setPasswords({ current: '', new: '', confirm: '' });
-      setPasswordErrors({});
-      addToast('Password updated successfully!', 'success');
+      try {
+        const { default: api } = await import('../../services/api');
+        await api.put('/users/password', {
+          currentPassword: passwords.current,
+          newPassword: passwords.new
+        });
+        setPasswords({ current: '', new: '', confirm: '' });
+        setPasswordErrors({});
+        addToast('Password updated successfully!', 'success');
+      } catch (err) {
+        addToast(err.response?.data?.error || 'Failed to update password', 'error');
+      }
     }
   };
 
-  const userInitials = profileData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const userInitials = profileData.name !== 'Loading...' ? profileData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'SA';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

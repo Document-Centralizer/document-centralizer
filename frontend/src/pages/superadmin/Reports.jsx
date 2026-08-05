@@ -12,11 +12,13 @@ const Reports = () => {
   const { toasts, addToast, removeToast } = useToast();
   const [activeTab, setActiveTab] = useState('Verification');
   const [chartData, setChartData] = useState([]);
+  const [dateFilter, setDateFilter] = useState('Last 7 Days');
+  const [issuerFilter, setIssuerFilter] = useState('All Issuers');
   const [showExportMenu, setShowExportMenu] = useState(false);
   
   useEffect(() => {
-    superAdminService.getChartData().then(setChartData);
-  }, []);
+    superAdminService.getChartData({ dateFilter, issuerFilter }).then(setChartData);
+  }, [dateFilter, issuerFilter]);
 
   const tabs = ['Verification', 'Approval', 'Rejected', 'Monthly'];
 
@@ -38,13 +40,11 @@ const Reports = () => {
       { key: 'rejected', label: 'Rejected' },
     ];
 
-    // For all formats we export CSV (PDF/Excel would need external libraries in production)
     const filename = `${activeTab.toLowerCase()}_report`;
     exportToCSV(chartData, filename, columns);
     addToast(`${activeTab} report exported as ${format.toUpperCase()}`, 'success');
   };
 
-  // Compute summary stats from chart data
   const totalApproved = chartData.reduce((sum, d) => sum + (d.approved || 0), 0);
   const totalRejected = chartData.reduce((sum, d) => sum + (d.rejected || 0), 0);
   const totalProcessed = totalApproved + totalRejected;
@@ -87,7 +87,6 @@ const Reports = () => {
       </div>
 
       <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-        {/* Tabs & Filters */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
           <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
             {tabs.map(tab => (
@@ -104,7 +103,11 @@ const Reports = () => {
           <div className="flex space-x-3">
             <div className="relative">
                <Calendar size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-               <select className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white">
+               <select 
+                 value={dateFilter}
+                 onChange={(e) => setDateFilter(e.target.value)}
+                 className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
+               >
                  <option>Last 7 Days</option>
                  <option>Last 30 Days</option>
                  <option>This Month</option>
@@ -113,10 +116,16 @@ const Reports = () => {
             </div>
             <div className="relative">
                <Filter size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-               <select className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white">
+               <select 
+                 value={issuerFilter}
+                 onChange={(e) => setIssuerFilter(e.target.value)}
+                 className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
+               >
                  <option>All Issuers</option>
                  <option>UIDAI</option>
                  <option>Income Tax Dept</option>
+                 <option>Election Commission of India</option>
+                 <option>State Education Board</option>
                </select>
             </div>
           </div>
@@ -126,14 +135,21 @@ const Reports = () => {
         <div className="h-96 w-full mt-8">
           <h3 className="text-lg font-bold text-slate-800 mb-6 text-center">{activeTab} Trend Analysis</h3>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <BarChart 
+              data={chartData.map(d => {
+                if (activeTab === 'Approval') return { name: d.name, approved: d.approved, rejected: 0 };
+                if (activeTab === 'Rejected') return { name: d.name, approved: 0, rejected: d.rejected };
+                return d;
+              })} 
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748B'}} />
               <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B'}} />
               <Tooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} cursor={{fill: '#F1F5F9'}} />
               <Legend iconType="circle" />
-              <Bar dataKey="approved" name="Approved" fill="#16A34A" radius={[4, 4, 0, 0]} barSize={30} />
-              <Bar dataKey="rejected" name="Rejected" fill="#DC2626" radius={[4, 4, 0, 0]} barSize={30} />
+              {activeTab !== 'Rejected' && <Bar dataKey="approved" name="Approved" fill="#16A34A" radius={[4, 4, 0, 0]} barSize={30} />}
+              {activeTab !== 'Approval' && <Bar dataKey="rejected" name="Rejected" fill="#DC2626" radius={[4, 4, 0, 0]} barSize={30} />}
             </BarChart>
           </ResponsiveContainer>
         </div>
