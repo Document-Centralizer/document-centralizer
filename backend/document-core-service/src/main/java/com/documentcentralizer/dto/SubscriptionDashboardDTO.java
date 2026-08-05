@@ -12,6 +12,6 @@ import java.util.List;
 @Builder
 public class SubscriptionDashboardDTO {
     private long basicCount;
-    private long proCount;
+    private long premiumCount;
     private List<UserProfileDTO> subscribedUsers;
 }

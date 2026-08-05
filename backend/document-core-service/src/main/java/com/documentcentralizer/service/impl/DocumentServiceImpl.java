@@ -393,7 +393,7 @@ public class DocumentServiceImpl implements DocumentService {
                 if(user == null) return;
                 
                 payload.put("userEmail", user.getEmail());
-                payload.put("userPhone", user.getPhoneNumber() != null ? user.getPhoneNumber() : "+910000000000"); // fallback
+                payload.put("userPhone", user.getMobileNumber() != null ? user.getMobileNumber() : "+910000000000"); // fallback
                 payload.put("userName", user.getFirstName() + " " + user.getLastName());
                 payload.put("documentName", document.getDocumentName());
                 payload.put("status", document.getVerificationStatus().toUpperCase());
