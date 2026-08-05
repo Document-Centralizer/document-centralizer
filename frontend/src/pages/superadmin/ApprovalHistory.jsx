@@ -211,7 +211,6 @@ const ApprovalHistory = () => {
               <div><span className="text-slate-500">User:</span> <span className="font-medium ml-1">{selectedDoc.userName}</span></div>
               <div><span className="text-slate-500">Type:</span> <span className="font-medium ml-1">{selectedDoc.type}</span></div>
               <div><span className="text-slate-500">Issuer:</span> <span className="font-medium ml-1">{selectedDoc.issuer}</span></div>
-              <div><span className="text-slate-500">Priority:</span> <span className="font-medium ml-1">{selectedDoc.priority}</span></div>
               <div><span className="text-slate-500">Confidence:</span> <span className="font-medium ml-1">{selectedDoc.confidenceScore}%</span></div>
               <div><span className="text-slate-500">Reviewed By:</span> <span className="font-medium ml-1">{selectedDoc.assignedAdmin || 'N/A'}</span></div>
               <div className="col-span-2"><span className="text-slate-500">Remarks:</span> <span className="font-medium ml-1">{selectedDoc.remarks || 'No remarks'}</span></div>

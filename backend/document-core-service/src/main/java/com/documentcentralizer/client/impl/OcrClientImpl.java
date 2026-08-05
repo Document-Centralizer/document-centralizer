@@ -55,12 +55,12 @@ public class OcrClientImpl implements OcrClient {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> bodyMap = response.getBody();
                 OcrResponse ocrResponse = new OcrResponse();
-                if (bodyMap.containsKey("extracted_text")) {
+                if (bodyMap.containsKey("extracted_text") && bodyMap.get("extracted_text") != null) {
                     ocrResponse.setExtractedText(bodyMap.get("extracted_text").toString());
                 }
                 
                 // Read dynamic confidence score from python service
-                if (bodyMap.containsKey("confidence_score")) {
+                if (bodyMap.containsKey("confidence_score") && bodyMap.get("confidence_score") != null) {
                     try {
                         ocrResponse.setConfidenceScore(Double.parseDouble(bodyMap.get("confidence_score").toString()));
                     } catch (NumberFormatException e) {

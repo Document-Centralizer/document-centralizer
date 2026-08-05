@@ -30,11 +30,18 @@ def extract_text(file: UploadFile = File(...)):
         else:
             image = Image.open(io.BytesIO(contents))
             # Extract text and confidence using pytesseract
-            text = pytesseract.image_to_string(image)
             data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+            words = []
+            confidences = []
+            for i in range(len(data['text'])):
+                word = data['text'][i].strip()
+                conf = float(data['conf'][i])
+                if word:
+                    words.append(word)
+                if conf >= 0:
+                    confidences.append(conf)
             
-            # Calculate average confidence for recognized words
-            confidences = [int(c) for c in data['conf'] if int(c) != -1]
+            text = " ".join(words)
             if confidences:
                 confidence_score = sum(confidences) / len(confidences)
             else:
