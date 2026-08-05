@@ -21,7 +21,7 @@ public class OcrClientImpl implements OcrClient {
 
     private final RestTemplate restTemplate;
 
-    @Value("${ocr.service.url:http://localhost:5001/extract}")
+    @Value("${ocr.service.url:http://localhost:5000/extract}")
     private String ocrServiceUrl;
 
     public OcrClientImpl() {
@@ -59,9 +59,16 @@ public class OcrClientImpl implements OcrClient {
                     ocrResponse.setExtractedText(bodyMap.get("extracted_text").toString());
                 }
                 
-                // Tesseract default implementation does not provide a confidence score easily.
-                // We default it to a mock high value or N/A.
-                ocrResponse.setConfidenceScore(100.0);
+                // Read dynamic confidence score from python service
+                if (bodyMap.containsKey("confidence_score")) {
+                    try {
+                        ocrResponse.setConfidenceScore(Double.parseDouble(bodyMap.get("confidence_score").toString()));
+                    } catch (NumberFormatException e) {
+                        ocrResponse.setConfidenceScore(100.0);
+                    }
+                } else {
+                    ocrResponse.setConfidenceScore(100.0);
+                }
                 
                 return ocrResponse;
             }

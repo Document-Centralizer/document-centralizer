@@ -78,7 +78,7 @@ async def chat_endpoint(request: ChatRequest, authorization: Optional[str] = Hea
         user_message = request.message
         intent = "UNKNOWN_INTENT"
         
-        # step 3: Call Groq AI to understand the intent
+        # step 3: Call Groq API to understand the intent
         api_key = os.getenv("GROQ_API_KEY")
         if api_key:
             client = AsyncGroq(api_key=api_key)
@@ -95,9 +95,10 @@ async def chat_endpoint(request: ChatRequest, authorization: Optional[str] = Hea
                 intent = chat_completion.choices[0].message.content.strip()
             except Exception as e:
                 print(f"Error calling Groq API: {e}")
-        else:
-            # Fallback if no API key is set
-            print("Warning: GROQ_API_KEY not found in environment. Mocking intent for demo.")
+        
+        # Fallback if intent is still UNKNOWN_INTENT (either no API key or API call failed)
+        if intent == "UNKNOWN_INTENT":
+            print("Falling back to regex-based intent classification.")
             msg_lower = user_message.lower()
             if "pending" in msg_lower: intent = "GET_PENDING_COUNT"
             elif "approved" in msg_lower or "verified" in msg_lower: intent = "GET_APPROVED_COUNT"

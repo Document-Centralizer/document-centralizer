@@ -13,11 +13,12 @@ def read_root():
     return {"status": "OCR Service is running"}
 
 @app.post("/extract")
-async def extract_text(file: UploadFile = File(...)):
+def extract_text(file: UploadFile = File(...)):
     try:
-        contents = await file.read()
+        contents = file.file.read()
         
         text = ""
+        confidence_score = 100.0
         # Check if PDF by looking for magic bytes
         if contents.startswith(b'%PDF'):
             import pypdf
@@ -28,12 +29,21 @@ async def extract_text(file: UploadFile = File(...)):
                     text += extracted + "\n"
         else:
             image = Image.open(io.BytesIO(contents))
-            # Extract text using pytesseract
+            # Extract text and confidence using pytesseract
             text = pytesseract.image_to_string(image)
+            data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+            
+            # Calculate average confidence for recognized words
+            confidences = [int(c) for c in data['conf'] if int(c) != -1]
+            if confidences:
+                confidence_score = sum(confidences) / len(confidences)
+            else:
+                confidence_score = 0.0
         
         return {
             "filename": file.filename,
-            "extracted_text": text.strip()
+            "extracted_text": text.strip(),
+            "confidence_score": round(confidence_score, 2)
         }
     except Exception as e:
         import traceback
