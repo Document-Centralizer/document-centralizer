@@ -151,4 +151,4 @@ docs/generated/
 # Misc
 # ==================================
 *.bak
-*.orig
+*.origtest_s3.py

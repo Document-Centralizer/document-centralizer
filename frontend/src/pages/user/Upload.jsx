@@ -154,9 +154,6 @@ const Upload = () => {
             const { default: api } = await import('../../services/api');
             
             await api.post('/documents/upload', formDataToSend, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                },
                 onUploadProgress: (progressEvent) => {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                     setProgress(percentCompleted);
