@@ -3,6 +3,9 @@ import pytesseract
 from PIL import Image
 import io
 
+# Explicitly set the tesseract executable path for Windows
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
 app = FastAPI(title="Python OCR Service", description="Service for extracting text from images using Tesseract OCR")
 
 @app.get("/")

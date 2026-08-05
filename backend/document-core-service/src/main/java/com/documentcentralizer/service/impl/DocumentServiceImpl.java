@@ -399,7 +399,11 @@ public class DocumentServiceImpl implements DocumentService {
                 payload.put("userPhone", "+910000000000"); // fallback
                 payload.put("userName", user.getFirstName() + " " + user.getLastName());
                 payload.put("documentName", document.getDocumentName());
-                payload.put("status", document.getVerificationStatus().toUpperCase());
+                String status = document.getVerificationStatus().toUpperCase();
+                if ("VERIFIED".equals(status)) {
+                    status = "APPROVED";
+                }
+                payload.put("status", status);
                 payload.put("remarks", document.getRemarks() != null ? document.getRemarks() : "");
 
                 org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();

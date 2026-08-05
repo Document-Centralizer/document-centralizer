@@ -16,14 +16,12 @@ namespace notification_service.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly IEmailService _emailService;
-        private readonly ISmsService _smsService;
         private readonly AppDbContext _dbContext;
 
         // Constructor Injection: We inject our services and database context here.
-        public NotificationController(IEmailService emailService, ISmsService smsService, AppDbContext dbContext)
+        public NotificationController(IEmailService emailService, AppDbContext dbContext)
         {
             _emailService = emailService;
-            _smsService = smsService;
             _dbContext = dbContext;
         }
 
@@ -40,17 +38,15 @@ namespace notification_service.Controllers
             // 2. Prepare the Email Subject and HTML Message Template based on the Status
             string subject = "";
             string htmlMessage = "";
-            string smsMessage = "";
 
             // Convert status to uppercase to avoid case-sensitivity issues (e.g. "rejected" vs "REJECTED")
             string statusUpper = payload.Status.ToUpper();
 
-            if (statusUpper == "VERIFIED")
+            if (statusUpper == "APPROVED" || statusUpper == "VERIFIED")
             {
                 subject = "Document Verified Successfully!";
                 htmlMessage = $"<h3>Congratulations {payload.UserName},</h3>" +
                               $"<p>Your document <b>'{payload.DocumentName}'</b> has been successfully verified by our administrators.</p>";
-                smsMessage = $"Hello {payload.UserName}, your document '{payload.DocumentName}' is Verified!";
             }
             else if (statusUpper == "REJECTED")
             {
@@ -59,19 +55,14 @@ namespace notification_service.Controllers
                               $"<p>Unfortunately, your document <b>'{payload.DocumentName}'</b> was rejected.</p>" +
                               $"<p><b>Reason:</b> {payload.Remarks}</p>" +
                               $"<p>Please upload a corrected version.</p>";
-                smsMessage = $"Hi {payload.UserName}, your document '{payload.DocumentName}' was Rejected. Reason: {payload.Remarks}";
             }
             else
             {
-                return BadRequest("Invalid status. Must be VERIFIED or REJECTED.");
+                return BadRequest("Invalid status. Must be APPROVED, VERIFIED or REJECTED.");
             }
 
-            // 3. Dispatch the Email and SMS concurrently
-            var emailTask = _emailService.SendEmailAsync(payload.UserEmail, subject, htmlMessage);
-            var smsTask = _smsService.SendSmsAsync(payload.UserPhone, smsMessage);
-            
-            // Wait for both to complete
-            await Task.WhenAll(emailTask, smsTask);
+            // 3. Dispatch the Email
+            await _emailService.SendEmailAsync(payload.UserEmail, subject, htmlMessage);
 
             // 4. Log the notification into the MySQL Database
             var log = new NotificationLog
