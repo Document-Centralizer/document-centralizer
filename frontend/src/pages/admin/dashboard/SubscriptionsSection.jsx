@@ -15,7 +15,7 @@ export default function SubscriptionsSection() {
                 const data = response.data;
                 setStats({
                     basic: data.basicCount,
-                    pro: data.proCount
+                    premium: data.premiumCount
                 });
                 
                 // Map API users to match expected format
@@ -46,7 +46,7 @@ export default function SubscriptionsSection() {
 
     const dynamicSubscriptionPlans = [
         { name: "Basic", price: "Free", users: stats.basic, features: ["Up to 10 Documents", "Standard Support", "Basic Analytics"] },
-        { name: "Pro", price: "₹99/mo", users: stats.pro, features: ["Unlimited Documents", "Priority Support", "Advanced Analytics", "Custom Categories"], recommended: true }
+        { name: "Premium", price: "₹99/mo", users: stats.premium, features: ["Unlimited Documents", "Priority Support", "Advanced Analytics", "Custom Categories"], recommended: true }
     ];
 
     return (
@@ -95,7 +95,7 @@ export default function SubscriptionsSection() {
                                     <td className="px-6 py-4 text-gray-500">{user.email}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                            user.plan === 'Pro' ? 'bg-blue-100 text-blue-700' :
+                                            user.plan === 'Premium' ? 'bg-blue-100 text-blue-700' :
                                             'bg-slate-100 text-slate-700'
                                         }`}>
                                             {user.plan}

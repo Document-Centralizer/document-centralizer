@@ -95,6 +95,7 @@ public class PaymentController {
                 User user = userRepository.findById(userId)
                         .orElseThrow(() -> new RuntimeException("User not found"));
                 user.setIsPremium(true);
+                user.setSubscriptionPlan("Premium");
                 userRepository.save(user);
 
                 Map<String, Object> response = new HashMap<>();

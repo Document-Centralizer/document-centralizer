@@ -102,22 +102,25 @@ public class UserServiceImpl implements UserService {
         java.util.List<com.documentcentralizer.entity.User> users = userRepository.findAll();
         
         long basicCount = 0;
-        long proCount = 0;
+        long premiumCount = 0;
         
         java.util.List<UserProfileDTO> subscribedUsers = new java.util.ArrayList<>();
         
         for (com.documentcentralizer.entity.User user : users) {
+            if (user.getRole() == com.documentcentralizer.entity.Role.ADMIN) {
+                continue;
+            }
             String plan = user.getSubscriptionPlan();
             if (plan != null) {
                 if (plan.equalsIgnoreCase("Basic")) basicCount++;
-                else if (plan.equalsIgnoreCase("Pro")) proCount++;
+                else if (plan.equalsIgnoreCase("Premium")) premiumCount++;
             }
             subscribedUsers.add(modelMapper.map(user, UserProfileDTO.class));
         }
         
         return com.documentcentralizer.dto.SubscriptionDashboardDTO.builder()
                 .basicCount(basicCount)
-                .proCount(proCount)
+                .premiumCount(premiumCount)
                 .subscribedUsers(subscribedUsers)
                 .build();
     }
