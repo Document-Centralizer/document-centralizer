@@ -101,6 +101,9 @@ public class AuthServiceImpl implements AuthService {
 				"This link will expire in 15 minutes.\n\n" +
 				"If you did not request this, please ignore this email.";
 
+		// For local testing, log the URL since SMTP is not configured
+		log.info("Reset password link for {}: {}", request.getEmail(), resetUrl);
+		
 		emailService.sendEmail(user.getEmail(), "Password Reset Request", emailText);
 	}
 

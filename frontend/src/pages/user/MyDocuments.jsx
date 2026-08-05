@@ -59,7 +59,7 @@ const ActionMenu = ({ doc, onPreview, onDownload }) => {
                                 <button 
                                     onClick={() => {
                                         if (doc.shareSlug) {
-                                            navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${doc.shareSlug}`);
+                                            navigator.clipboard.writeText(`${window.location.origin}/shared/${doc.shareSlug}`);
                                             alert("Share link copied to clipboard!");
                                         } else {
                                             alert("Share link not available.");
@@ -197,7 +197,7 @@ const PreviewModal = ({ doc, onClose }) => {
                                 <button 
                                     onClick={() => {
                                         if (displayDoc.shareSlug) {
-                                            navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${displayDoc.shareSlug}`);
+                                            navigator.clipboard.writeText(`${window.location.origin}/shared/${displayDoc.shareSlug}`);
                                             alert("Share link copied to clipboard!");
                                         } else {
                                             alert("Share link not available.");
@@ -437,7 +437,7 @@ const MyDocuments = () => {
                                                             {doc.status === 'VERIFIED' && doc.shareSlug && (
                                                                 <button 
                                                                     onClick={() => {
-                                                                        navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${doc.shareSlug}`);
+                                                                        navigator.clipboard.writeText(`${window.location.origin}/shared/${doc.shareSlug}`);
                                                                         alert("Share link copied to clipboard!");
                                                                     }}
                                                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-xs font-medium transition-colors border border-blue-100"
@@ -476,7 +476,7 @@ const MyDocuments = () => {
                                                             {doc.status === 'VERIFIED' && doc.shareSlug && (
                                                                 <button 
                                                                     onClick={() => {
-                                                                        navigator.clipboard.writeText(`${window.location.origin}/api/documents/share/${doc.shareSlug}`);
+                                                                        navigator.clipboard.writeText(`${window.location.origin}/shared/${doc.shareSlug}`);
                                                                         alert("Share link copied to clipboard!");
                                                                     }}
                                                                     className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition-colors border border-blue-100"

@@ -212,7 +212,7 @@ const Upload = () => {
                 amount: orderRes.data.amount,
                 currency: orderRes.data.currency,
                 name: "Document Centralizer",
-                description: "Lifetime Premium Subscription",
+                description: "3 Month Premium Subscription",
                 order_id: orderRes.data.orderId,
                 handler: async function (response) {
                     try {
@@ -510,7 +510,7 @@ const Upload = () => {
                                     <ShieldCheck size={32} />
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-800 mb-3">Upgrade to Premium</h3>
-                                <p className="text-slate-500 mb-8">You have reached the free limit of 5 documents. Upgrade to Premium for ₹99 to get lifetime unlimited uploads and priority verification!</p>
+                                <p className="text-slate-500 mb-8">You have reached the free limit of 5 documents. Upgrade to Premium for ₹99 to get 3 months of unlimited uploads and priority verification!</p>
                                 
                                 <div className="space-y-4">
                                     <button onClick={handleUpgrade} className="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200">

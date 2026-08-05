@@ -38,4 +38,6 @@ public class MyDocumentResponse {
     private String status;
     
     private LocalDateTime uploadedAt;
+    
+    private String shareSlug;
 }

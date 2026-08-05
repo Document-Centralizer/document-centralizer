@@ -2,6 +2,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import ProtectedRoute from './ProtectedRoute';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
+import SharedDocumentView from '../pages/SharedDocumentView';
 import Unauthorized from '../pages/Unauthorized';
 
 import UserLayout from '../layouts/UserLayout';
@@ -12,7 +15,6 @@ import Upload from '../pages/user/Upload';
 import MyDocuments from '../pages/user/MyDocuments';
 import Subscription from '../pages/user/Subscription';
 import Profile from '../pages/user/Profile';
-import Settings from '../pages/user/Settings';
 
 import AdminDashboard from '../pages/admin/AdminDashboard';
 
@@ -33,6 +35,9 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/shared/:shareSlug" element={<SharedDocumentView />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* User Routes */}
@@ -44,7 +49,6 @@ const AppRoutes = () => {
             <Route path="upload" element={<Upload />} />
             <Route path="subscription" element={<Subscription />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="settings" element={<Settings />} />
           </Route>
         </Route>
 

@@ -40,7 +40,7 @@ const UserDashboard = () => {
             <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl flex justify-between items-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
                 <div className="relative z-10">
-                    <h1 className="text-3xl font-bold mb-2">Welcome back to DocCentralizer!</h1>
+                    <h1 className="text-3xl font-bold mb-2">Welcome to Document Centralizer</h1>
                     <p className="text-slate-300 max-w-lg">Manage, verify, and store all your crucial documents in one highly secure platform.</p>
                 </div>
                 <Link to="/user/upload" className="relative z-10 bg-white text-slate-900 px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-slate-100 transition shadow-lg">

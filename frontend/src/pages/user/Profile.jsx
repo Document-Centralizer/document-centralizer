@@ -269,7 +269,7 @@ const Profile = () => {
                 amount: orderRes.data.amount,
                 currency: orderRes.data.currency,
                 name: "Document Centralizer",
-                description: "Lifetime Premium Subscription",
+                description: "3 Month Premium Subscription",
                 order_id: orderRes.data.orderId,
                 handler: async function (response) {
                     try {
@@ -360,9 +360,6 @@ const Profile = () => {
                         <div className="flex-1 pt-4 md:pt-0">
                             <div className="flex flex-wrap items-center gap-3 mb-1">
                                 <h2 className="text-2xl font-black text-slate-800">{userData.fullName}</h2>
-                                <span className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    <ShieldCheck size={12}/> Verified
-                                </span>
                                 {userData.isPremium && (
                                     <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 border border-yellow-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                                         <Star size={12}/> Premium
@@ -372,7 +369,6 @@ const Profile = () => {
                             <p className="text-slate-500 text-sm">{userData.email}</p>
                             <div className="flex flex-wrap gap-6 mt-4 text-sm text-slate-500">
                                 <span className="flex items-center gap-1.5"><User size={14}/> {userData.role || 'USER'}</span>
-                                <span className="flex items-center gap-1.5"><MapPin size={14}/> {userData.location}</span>
                             </div>
                         </div>
                         {/* Stats Quick */}
@@ -495,7 +491,7 @@ const Profile = () => {
                                         <span className="flex items-center gap-1.5 text-yellow-400 text-xs font-bold uppercase"><Star size={12}/> Premium</span>
                                         <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Active</span>
                                     </div>
-                                    <p className="text-xl font-black">Lifetime Access</p>
+                                    <p className="text-xl font-black">3 Months Access</p>
                                     <p className="text-xs text-slate-400 mt-1">Unlimited uploads unlocked</p>
                                 </div>
                             ) : (
@@ -522,7 +518,6 @@ const Profile = () => {
                                 { label: "Upload Document",  icon: UploadCloud, to: "/user/upload" },
                                 { label: "My Documents",     icon: FileText,    to: "/user/my-documents" },
                                 { label: "Subscription",     icon: Star,        to: "/user/subscription" },
-                                { label: "Settings",         icon: Settings,    to: "/user/settings" },
                             ].map((a, i) => (
                                 <Link key={i} to={a.to} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100 group">
                                     <span className="flex items-center gap-3 text-sm font-medium text-slate-700">

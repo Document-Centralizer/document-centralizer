@@ -259,6 +259,7 @@ public class DocumentServiceImpl implements DocumentService {
                         .fileName(doc.getOriginalFileName())
                         .status(doc.getVerificationStatus())
                         .uploadedAt(doc.getUploadedAt())
+                        .shareSlug(doc.getShareSlug())
                         .build())
                 .toList();
     }
