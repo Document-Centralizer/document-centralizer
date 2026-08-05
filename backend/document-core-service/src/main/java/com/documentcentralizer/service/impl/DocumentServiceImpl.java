@@ -180,6 +180,9 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Update verification status
         document.setVerificationStatus(status);
+        if (reasonOrRemarks != null && !reasonOrRemarks.trim().isEmpty()) {
+            document.setAdminRemark(reasonOrRemarks);
+        }
 
         // Generate a share slug if it is verified and doesn't have one
         if ("VERIFIED".equalsIgnoreCase(status)) {
@@ -393,7 +396,7 @@ public class DocumentServiceImpl implements DocumentService {
                 if(user == null) return;
                 
                 payload.put("userEmail", user.getEmail());
-                payload.put("userPhone", user.getPhoneNumber() != null ? user.getPhoneNumber() : "+910000000000"); // fallback
+                payload.put("userPhone", "+910000000000"); // fallback
                 payload.put("userName", user.getFirstName() + " " + user.getLastName());
                 payload.put("documentName", document.getDocumentName());
                 payload.put("status", document.getVerificationStatus().toUpperCase());

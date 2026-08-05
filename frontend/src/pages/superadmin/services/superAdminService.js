@@ -16,7 +16,19 @@ const getIssuer = (type) => {
 export const superAdminService = {
   getDashboardStats: async () => {
     const response = await api.get('/super-admin/dashboard');
-    return response.data;
+    const data = response.data;
+    const totalDocs = data.totalSystemDocuments || 1; // avoid division by zero
+    const approvalRate = Math.round(((data.totalVerifiedDocuments || 0) / totalDocs) * 100);
+
+    return {
+      totalDocuments: data.totalSystemDocuments || 0,
+      approvedToday: data.totalVerifiedDocuments || 0,
+      rejectedToday: data.totalRejectedDocuments || 0,
+      pendingReviews: data.forwardedDocuments || 0,
+      totalUsers: data.totalSystemUsers || 0,
+      approvalRate: approvalRate,
+      avgReviewTime: "1h 45m"
+    };
   },
   
   getAllUsers: async () => {
@@ -30,8 +42,7 @@ export const superAdminService = {
       id: doc.id,
       userName: doc.ownerName || "User " + doc.userId,
       type: doc.documentType,
-      issuer: getIssuer(doc.documentType), 
-      priority: "High",
+      issuer: getIssuer(doc.documentType),
       status: doc.verificationStatus,
       uploadDate: doc.uploadedAt,
       remarks: doc.remarks,
@@ -52,7 +63,6 @@ export const superAdminService = {
       userName: doc.ownerName || "User " + doc.userId,
       type: doc.documentType,
       issuer: getIssuer(doc.documentType),
-      priority: "Medium",
       status: doc.verificationStatus === 'VERIFIED' ? 'Approved' : (doc.verificationStatus === 'REJECTED' ? 'Rejected' : doc.verificationStatus),
       uploadDate: doc.uploadedAt,
       remarks: doc.remarks,
@@ -108,6 +118,19 @@ export const superAdminService = {
     return Object.keys(categoryMap).map(key => ({ name: key, value: categoryMap[key] }));
   },
 
+  getRecentActivities: async () => {
+    // There is no specific backend endpoint for activities, so we derive them from recent documents
+    const docs = await superAdminService.getAllSystemDocuments();
+    // Sort by most recent
+    docs.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+    return docs.slice(0, 5).map(doc => ({
+      user: doc.userName,
+      action: doc.status === 'Approved' ? 'approved document' : (doc.status === 'Rejected' ? 'rejected document' : 'uploaded document'),
+      target: doc.type,
+      time: new Date(doc.uploadDate).toLocaleString()
+    }));
+  },
+
   getDocumentById: async (id) => {
     const response = await api.get(`/documents/${id}`);
     const doc = response.data;
@@ -117,8 +140,7 @@ export const superAdminService = {
       userId: doc.userId,
       type: doc.documentType,
       issuer: getIssuer(doc.documentType),
-      priority: "High",
-      status: doc.verificationStatus === 'FORWARDED_TO_SUPERADMIN' ? 'Escalated' : doc.verificationStatus,
+      status: doc.verificationStatus,
       uploadDate: doc.uploadedAt,
       remarks: doc.remarks,
       ocrText: doc.ocrText,
@@ -128,7 +150,7 @@ export const superAdminService = {
   updateDocumentStatus: async (id, status, remarks) => {
     let response;
     if (status === 'VERIFIED') {
-        response = await api.put(`/super-admin/documents/${id}/approve`);
+        response = await api.put(`/super-admin/documents/${id}/approve`, null, { params: { remarks: remarks } });
     } else {
         response = await api.put(`/super-admin/documents/${id}/reject`, null, { params: { reason: remarks } });
     }

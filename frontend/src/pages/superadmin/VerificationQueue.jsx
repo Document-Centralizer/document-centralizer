@@ -19,19 +19,6 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const PriorityBadge = ({ priority }) => {
-  const styles = {
-    'High': 'text-red-600 bg-red-50 border-red-200',
-    'Medium': 'text-amber-600 bg-amber-50 border-amber-200',
-    'Low': 'text-green-600 bg-green-50 border-green-200'
-  };
-  return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium border ${styles[priority]}`}>
-      {priority}
-    </span>
-  );
-};
-
 const VerificationQueue = () => {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
@@ -101,7 +88,7 @@ const VerificationQueue = () => {
               <th className="px-4 py-3">User</th>
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Issuer</th>
-              <th className="px-4 py-3">Priority</th>
+
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Date</th>
               <th className="px-4 py-3 text-right">Action</th>
@@ -125,7 +112,7 @@ const VerificationQueue = () => {
                   <td className="px-4 py-3">{doc.userName}</td>
                   <td className="px-4 py-3">{doc.type}</td>
                   <td className="px-4 py-3">{doc.issuer}</td>
-                  <td className="px-4 py-3"><PriorityBadge priority={doc.priority} /></td>
+
                   <td className="px-4 py-3"><StatusBadge status={doc.status} /></td>
                   <td className="px-4 py-3 whitespace-nowrap">{new Date(doc.uploadDate).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-right">

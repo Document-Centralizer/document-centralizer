@@ -13,7 +13,7 @@ const DocumentViewer = ({ docId }) => {
             superAdminService.downloadDocument(docId)
                 .then(res => {
                     const url = URL.createObjectURL(res.data);
-                    setDocUrl(url);
+                    setDocUrl(url + '#toolbar=0');
                 })
                 .catch(console.error);
         }
@@ -36,6 +36,8 @@ const DocumentReview = () => {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [actionLoading, setActionLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [authBridgeResult, setAuthBridgeResult] = useState(null);
 
   useEffect(() => {
     const fetchDoc = async () => {
@@ -64,6 +66,18 @@ const DocumentReview = () => {
     } catch (err) {
       addToast('Failed to update document status', 'error');
       setActionLoading(false);
+    }
+  };
+
+  const handleAuthBridgeSync = async () => {
+    setSyncLoading(true);
+    try {
+      const result = await superAdminService.verifyWithAuthBridge(doc.type, doc.ocrText);
+      setAuthBridgeResult(result);
+    } catch (err) {
+      addToast('AuthBridge Sync Failed', 'error');
+    } finally {
+      setSyncLoading(false);
     }
   };
 
@@ -101,11 +115,29 @@ const DocumentReview = () => {
                 <h3 className="font-semibold text-blue-900 flex items-center">
                   <Activity size={16} className="mr-2" /> OCR AI Results
                 </h3>
+                <button 
+                  onClick={handleAuthBridgeSync}
+                  disabled={syncLoading}
+                  className="flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  <Activity size={14} className="mr-1" /> {syncLoading ? 'Syncing...' : 'AuthBridge Sync'}
+                </button>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="bg-white p-3 rounded border border-blue-50 text-slate-700 max-h-32 overflow-y-auto whitespace-pre-wrap">
                   {doc.ocrText || <span className="text-slate-400 italic">No OCR text available.</span>}
                 </div>
+                
+                {authBridgeResult && (
+                  <div className={`mt-3 p-3 rounded-lg border ${authBridgeResult.status === 'SUCCESS' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+                    <h4 className="font-semibold text-sm flex items-center mb-1">
+                      {authBridgeResult.status === 'SUCCESS' ? <Check size={14} className="mr-1" /> : <AlertTriangle size={14} className="mr-1" />}
+                      AuthBridge {authBridgeResult.status === 'SUCCESS' ? 'Verified' : 'Rejected'}
+                    </h4>
+                    <p className="text-xs mb-1">{authBridgeResult.message}</p>
+                    <p className="text-xs font-semibold">Confidence: {authBridgeResult.confidence}%</p>
+                  </div>
+                )}
               </div>
             </div>
 

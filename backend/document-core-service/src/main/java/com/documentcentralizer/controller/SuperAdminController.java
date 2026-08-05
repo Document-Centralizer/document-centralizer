@@ -41,8 +41,10 @@ public class SuperAdminController {
     }
 
     @PutMapping("/documents/{id}/approve")
-    public ResponseEntity<DocumentResponseDTO> approveDocument(@PathVariable Long id) {
-        DocumentResponseDTO approvedDocument = documentService.changeVerificationStatus(id, "VERIFIED", null);
+    public ResponseEntity<DocumentResponseDTO> approveDocument(
+            @PathVariable Long id,
+            @RequestParam(required = false) String remarks) {
+        DocumentResponseDTO approvedDocument = documentService.changeVerificationStatus(id, "VERIFIED", remarks);
         return ResponseEntity.ok(approvedDocument);
     }
 
