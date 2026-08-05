@@ -243,4 +243,13 @@ public class DocumentController {
                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, headerValue)
                 .body(resource);
     }
+
+    /**
+     * Public endpoint to fetch metadata of a verified document using its share slug.
+     */
+    @Operation(summary = "Get Shared Document Metadata", description = "Fetch metadata for a shared document.")
+    @GetMapping("/share/metadata/{slug}")
+    public ResponseEntity<DocumentResponseDTO> getSharedDocumentMetadata(@PathVariable String slug) {
+        return ResponseEntity.ok(documentService.getDocumentMetadataByShareSlug(slug));
+    }
 }

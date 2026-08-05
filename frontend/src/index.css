@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 body {
   margin: 0;
   padding: 0;
-  background-color: #f8fafc;
+  @apply bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100;
   font-family: "Inter", sans-serif;
 }

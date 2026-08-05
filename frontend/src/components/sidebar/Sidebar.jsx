@@ -31,7 +31,6 @@ const Sidebar = () => {
                     title: "ACCOUNT",
                     menus: [
                         { name: "Profile", path: "/superadmin/profile", icon: User },
-                        { name: "Settings", path: "/superadmin/settings", icon: Settings },
                     ],
                 }
             ];
@@ -62,7 +61,6 @@ const Sidebar = () => {
                     title: "ACCOUNT",
                     menus: [
                         { name: "Profile", path: "/admin/profile", icon: User },
-                        { name: "Settings", path: "/admin/settings", icon: Settings },
                     ],
                 }
             ];
@@ -91,7 +89,6 @@ const Sidebar = () => {
                 title: "ACCOUNT",
                 menus: [
                     { name: "Profile", path: "/user/profile", icon: User },
-                    { name: "Settings", path: "/user/settings", icon: Settings },
                 ],
             },
         ];
@@ -109,7 +106,7 @@ const Sidebar = () => {
                 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 z-50
             `}
         >
-            <div className="h-17 border-b border-slate-200 flex items-center justify-center p-4">
+            <div className="h-20 border-b border-slate-200 flex items-center justify-center p-4">
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className="flex items-center justify-center w-full"

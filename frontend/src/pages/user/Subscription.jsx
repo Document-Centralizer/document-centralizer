@@ -79,7 +79,7 @@ const Subscription = () => {
                 amount: orderRes.data.amount,
                 currency: orderRes.data.currency,
                 name: "Document Centralizer",
-                description: "Lifetime Premium Subscription",
+                description: "3 Month Premium Subscription",
                 order_id: orderRes.data.orderId,
                 handler: async function (response) {
                     try {
@@ -141,7 +141,7 @@ const Subscription = () => {
         {
             name: "Premium",
             price: "₹99",
-            cycle: "Lifetime",
+            cycle: "3 Months",
             badge: "Most Popular",
             features: ["Unlimited Uploads", "Priority Verification", "Unlimited Sharing", "QR Verification", "Cloud Backup"],
             cta: userData.isPremium ? "Current Plan" : "Upgrade to Premium",
@@ -196,7 +196,7 @@ const Subscription = () => {
                                 )}
                             </div>
                             <h2 className={`text-3xl font-black ${userData.isPremium ? 'text-white' : 'text-slate-900'}`}>
-                                {userData.isPremium ? 'Lifetime Access' : 'Limited Access'}
+                                {userData.isPremium ? '3 Months Access' : 'Limited Access'}
                             </h2>
                             <p className={`text-sm mt-2 ${userData.isPremium ? 'text-slate-300' : 'text-slate-500'}`}>
                                 {userData.isPremium ? 'You have unlimited document uploads unlocked.' : 'You can upload up to 5 documents max.'}
