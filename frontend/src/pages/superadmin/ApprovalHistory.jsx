@@ -29,7 +29,7 @@ const ApprovalHistory = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await superAdminService.getDocuments();
+        const data = await superAdminService.getAllSystemDocuments();
         // Filter only approved or rejected
         setDocuments(data.filter(d => d.status === 'Approved' || d.status === 'Rejected'));
       } catch (err) {
@@ -43,8 +43,8 @@ const ApprovalHistory = () => {
 
   const filteredDocs = useMemo(() => {
     let result = documents.filter(d => 
-      d.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      d.userName.toLowerCase().includes(searchTerm.toLowerCase())
+      String(d.id).toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (d.userName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Date filtering
