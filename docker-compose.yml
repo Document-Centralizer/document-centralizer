@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: doc_centralizer_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: document_centralizer
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    # Replace 'yourdockerhubuser' with your actual Docker Hub username
+    image: yourdockerhubuser/document-centralizer-backend:latest
+    container_name: doc_centralizer_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/document_centralizer?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root123
+      # Add other necessary backend variables (e.g. JWT_SECRET, GROQ_API_KEY) here
+
+  frontend:
+    image: yourdockerhubuser/document-centralizer-frontend:latest
+    container_name: doc_centralizer_frontend
+    restart: always
+    ports:
+      - "5173:80" # Assuming Vite builds are served by Nginx on port 80 inside the container
+    depends_on:
+      - backend
+
+  ocr-service:
+    image: yourdockerhubuser/document-centralizer-ocr:latest
+    container_name: doc_centralizer_ocr
+    restart: always
+    ports:
+      - "5000:5000"
+
+  chatbot-service:
+    image: yourdockerhubuser/document-centralizer-chatbot:latest
+    container_name: doc_centralizer_chatbot
+    restart: always
+    ports:
+      - "8000:8000" # Update port if the python chatbot runs on a different one
+    environment:
+      - BACKEND_URL=http://backend:8080/api
+
+  notification-service:
+    image: yourdockerhubuser/document-centralizer-notify:latest
+    container_name: doc_centralizer_notify
+    restart: always
+    ports:
+      - "5001:8080" # Update container port based on what ASP.NET uses
+
+volumes:
+  db_data:
