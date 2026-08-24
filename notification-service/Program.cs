@@ -43,7 +43,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Redirect all HTTP requests to secure HTTPS
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 // Map the API controllers to routes
 app.MapControllers();

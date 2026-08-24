@@ -21,7 +21,7 @@ public class OcrClientImpl implements OcrClient {
 
     private final RestTemplate restTemplate;
 
-    @Value("${ocr.service.url:http://localhost:5000/extract}")
+    @Value("${ocr.service.url:http://localhost:5002/extract}")
     private String ocrServiceUrl;
 
     public OcrClientImpl() {
